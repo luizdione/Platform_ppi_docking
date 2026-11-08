@@ -432,9 +432,12 @@ def test_tabela_indices_ordena_e_tem_colunas(monkeypatch) -> None:
     """A tabela projeta observe_pairs nas colunas certas e ordena
     HIT > MAYBE > weak (e por iface-ipTM desc), com os runs 'erro' no fim.
 
+    `tabela_indices` monta um DataFrame, entao depende do extra [viz].
+
     observe_pairs e monkeypatchado -> nao toca E: nem roda scoring_engine.score, so a
     logica de projecao/ordenacao e exercitada.
     """
+    pytest.importorskip("pandas", reason="extra [viz] nao instalado")
     import math
 
     def _obs(pair_id, classe, iface_iptm, iptm=0.5, ipsae=0.2, erro=None):
@@ -550,12 +553,14 @@ def test_structure_view_html_cif_ausente_falha_alto(tmp_path) -> None:
 
 @pytest.mark.skipif(not _TEM_CURADO, reason=_motivo_sem_curado)
 def test_tabela_indices_reusa_motor_real() -> None:
-    """(skipif E:) A tabela tem as colunas certas, uma linha por run e ao menos um
-    par classificado - prova de que reusa o scoring_engine.score de verdade sobre os dados
-    em E:. Usa o MENOR subprojeto disponivel (DEMO03 DEMO03, 2 runs) para nao
-    re-scorar todos os runs de uma campanha grande - a cobertura do motor real
+    """A tabela tem as colunas certas, uma linha por run e ao menos um par
+    classificado - prova de que reusa o scoring_engine.score de verdade sobre
+    dados em disco. Pulado sem um indice curado declarado (ver PPI_SUBPROJECTS)
+    e sem o extra [viz]. Usa a MENOR campanha disponivel, para nao re-scorar
+    uma campanha grande - a cobertura do motor real
     ja e
     feita, mais a fundo, por test_observe_pairs_demo02_calcula_indices."""
+    pytest.importorskip("pandas", reason="extra [viz] nao instalado")
     subs = load_subprojects()
     ordem_preferida = ["DEMO03", "DEMO01", "DEMO02", "DEMO04"]
     candidatos = sorted(
