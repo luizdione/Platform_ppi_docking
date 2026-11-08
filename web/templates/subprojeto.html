@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ sub.name }} - painel PPI{% endblock %}
+{% block cabecalho %}{{ sub.name }}{% endblock %}
+{% block subtitulo %}<span class="tag">{{ sub.key }}</span> &middot; campanha {{ sub.campaign }}{% endblock %}
+
+{% block conteudo %}
+
+{% if erro %}
+<section>
+  <h2>Falha ao pontuar este subprojeto</h2>
+  <p class="lead">{{ erro }}</p>
+</section>
+{% endif %}
+
+<p class="lead">
+  <b>{{ pares|length }}</b> pares &middot;
+  <span class="badge b-HIT">HIT</span> {{ contagem.HIT }} &middot;
+  <span class="badge b-MAYBE">MAYBE</span> {{ contagem.MAYBE }} &middot;
+  <span class="badge b-weak">weak</span> {{ contagem.weak }}
+  {% if n_erros %} &middot; <b style="color:var(--am)">{{ n_erros }} com problema</b>{% endif %}
+</p>
+
+<div class="acoes">
+  <button class="acao" id="btn-funil" data-key="{{ sub.key }}">Rodar funil / GATE</button>
+  <button class="acao" id="btn-build">Regenerar pacote do viewer</button>
+  <a class="acao" href="/jobs" style="text-decoration:none">Ver jobs</a>
+  <a class="acao" href="/" style="text-decoration:none">&larr; Painel</a>
+</div>
+<p class="mut" id="aviso-acao" style="display:none"></p>
+
+<!-- ------------------------------------------------------------------ -->
+<section id="table">
+  <h2>Tabela de indices</h2>
+  <div style="overflow-x:auto">
+  <table class="tab">
+    <thead>
+      <tr>
+        <th>Isca</th><th>Parceiro</th><th>Classe</th>
+        <th>ipTM</th><th>iface-ipTM</th><th>ipSAE</th><th>pTM</th>
+        <th>pLDDT</th><th>PAE_if</th><th>BSA (A&sup2;)</th>
+        <th>contatos</th><th>res_if</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for p in pares %}
+      <tr{% if p.erro %} class="linha-erro"{% endif %}>
+        <td>{{ p.isca }}</td>
+        <td>{{ p.parceiro }}</td>
+        <td>{% if p.erro %}<span class="badge b-weak">erro</span>{% else %}<span class="badge b-{{ p.classe }}">{{ p.classe }}</span>{% endif %}</td>
+        <td>{{ p.iptm|num(3) }}</td>
+        <td>{{ p.iface_iptm|num(3) }}</td>
+        <td>{{ p.ipsae|num(3) }}</td>
+        <td>{{ p.ptm|num(3) }}</td>
+        <td>{{ p.complex_plddt|num(1) }}</td>
+        <td>{{ p.pae_iface_mean|num(2) }}</td>
+        <td>{{ p.bsa|num(0) }}</td>
+        <td>{{ p.n_contacts if p.n_contacts is not none else "n.d." }}</td>
+        <td>{{ p.n_iface_res if p.n_iface_res is not none else "n.d." }}</td>
+      </tr>
+      {% if p.erro %}
+      <tr class="linha-erro"><td colspan="12" class="mut" style="font-size:.78rem">
+        {{ p.label }}: {{ p.erro }}
+      </td></tr>
+      {% endif %}
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="mut" style="font-size:.8rem">
+    n.d. = nao disponivel (ipSAE e PAE de interface ficam indisponiveis quando a
+    matriz PAE do Boltz inclui tokens de ligante ATP/Mg).
+  </p>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<section id="charts">
+  <h2>Graficos</h2>
+  {% if erro_grafico %}<p class="lead" style="color:var(--am)">{{ erro_grafico }}</p>{% endif %}
+  <div class="charts" id="charts"></div>
+  <p class="mut" id="charts-vazio" style="display:none">Nenhum par pontuado - sem grafico a mostrar.</p>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<section id="viewer">
+  <h2>Estrutura 3D</h2>
+  <p class="lead">
+    Escolha o par e o modo de cor. <b>Por cadeia</b>: uma cor por cadeia.
+    <b>Por confianca</b>: pLDDT do proprio modelo (vermelho = baixa, azul = alta).
+    <b>Interface destacada</b>: residuos de contato (&lt;5 A) em bastoes.
+    Cofatores (ATP/Mg) sempre destacados.
+  </p>
+  <div class="viewer-row">
+    <div id="viewport"></div>
+    <div class="vpanel">
+      <select id="pairsel"></select>
+      <div class="vtools">
+        <span>Cor:</span>
+        <button class="btn cmode active" id="cm_chain" data-mode="chain">por cadeia</button>
+        <button class="btn cmode" id="cm_plddt" data-mode="plddt">por confianca (pLDDT)</button>
+        <button class="btn cmode" id="cm_iface" data-mode="iface">interface destacada</button>
+      </div>
+      <div id="plddtlegend" class="plddt-legend" style="display:none">
+        <span>pLDDT:</span>
+        <span class="pl pl-lo">&lt;50</span><span class="pl pl-mid">50-70</span>
+        <span class="pl pl-hi">70-90</span><span class="pl pl-vhi">&gt;90</span>
+        <span> (vermelho = baixa &rarr; azul = alta)</span>
+      </div>
+      <div>
+        <button class="btn" id="btnpng">Baixar PNG</button>
+        <a class="btn" id="btnpdb" download>Baixar PDB</a>
+        <a class="btn" id="btncif" download>Baixar CIF</a>
+      </div>
+      <div class="kv" id="kv"></div>
+    </div>
+  </div>
+</section>
+
+<script>window.__PAIRS__ = {{ pairs_json|safe }};</script>
+<script>window.__CHARTS__ = {{ charts_json|safe }};</script>
+<script src="/static/3Dmol-min.js"></script>
+<script src="/static/plotly.min.js"></script>
+<script src="/static/viewer3d.js"></script>
+<script src="/static/painel.js"></script>
+{% endblock %}

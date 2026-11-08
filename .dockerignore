@@ -1,0 +1,82 @@
+# ---------------------------------------------------------------------
+# O que NAO entra numa imagem construida a partir desta pasta.
+#
+# POR QUE ISTO EXISTE: um `COPY . .` leva para dentro da imagem TUDO o que
+# estiver no diretorio de build, inclusive o que o .gitignore mantem fora do
+# git -- dado, cache, credencial, resultado de execucao. A imagem e publicada,
+# entao essa pasta precisa de uma lista propria, nao basta a do git.
+#
+# O Dockerfile.haddock3 nao copia codigo deste repositorio (ele monta o dado em
+# /data em tempo de execucao), mas esta lista fica aqui como rede de seguranca
+# para qualquer build futuro feito nesta pasta.
+# ---------------------------------------------------------------------
+
+# Controle de versao e metadados
+.git/
+.gitignore
+.github/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Ambiente e credenciais (NUNCA numa imagem)
+.env
+.env.*
+*config_local*
+*.pem
+*.key
+*.credentials.json
+*secret*
+.netrc
+
+# DADO e resultado de execucao (nao pertencem a imagem)
+*.cif
+*.cif.gz
+*.pdb
+*.pdbqt
+*.mmcif
+*.ent
+*.npz
+*.npy
+*.tbl
+*.dcd
+*.xtc
+*.trr
+*.h5
+outputs/
+runs/
+run-*/
+manifests/
+jobs/
+resultados/
+results/
+_md_analysis/
+subprojetos.json
+
+# Bibliotecas de terceiros que o painel baixa sozinho
+web/static/3Dmol-min.js
+web/static/plotly.min.js
+
+# Editores, SO e backups
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.orig
+
+# Testes e documentacao nao precisam ir para uma imagem de execucao
+tests/

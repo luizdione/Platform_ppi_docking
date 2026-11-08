@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{% block titulo %}PPI - painel{% endblock %}</title>
+<link rel="stylesheet" href="/static/ppi.css">
+<link rel="stylesheet" href="/static/painel.css">
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="brand">
+    <h1>{% block cabecalho %}Plataforma PPI{% endblock %}</h1>
+    <div class="sub">{% block subtitulo %}painel local de analise e execucao{% endblock %}</div>
+  </div>
+  <nav class="navtop">
+    <a href="/">Painel</a>
+    <a href="/novo">Nova predicao</a>
+    <a href="/executar">Executar</a>
+    <a href="/jobs">Jobs</a>
+    <a href="/relatorio">Relatorio</a>
+    <a href="/experimentos">Experimentos</a>
+    <a href="/diagnostico">Diagnostico</a>
+    <a href="/ajuda">Ajuda</a>
+  </nav>
+</header>
+
+{% block conteudo %}{% endblock %}
+
+<footer>
+  <span class="mut">Plataforma PPI &middot; painel local (porta 8777) &middot; v{{ versao }}</span>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block titulo %}Nova predicao - painel PPI{% endblock %}
+{% block cabecalho %}Nova predicao{% endblock %}
+{% block subtitulo %}monta o complexo e gera o YAML de entrada do Boltz-2{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <p class="lead">
+    Monte o complexo cadeia a cadeia. Onde houver <b>accession</b>, prefira
+    buscar por UniProt: a sequencia canonica vem da fonte, e nao de um texto
+    colado que ninguem mais consegue conferir depois.
+  </p>
+
+  <div class="acoes">
+    <label style="font-size:.84rem">Nome do job<br>
+      <input id="nome" placeholder="barnase_x_barstarC82A"
+             style="width:320px;background:var(--card);color:var(--fg);border:1px solid var(--line);
+                    border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:.82rem"></label>
+    <label style="font-size:.84rem">Pasta de destino (entradas)<br>
+      <input id="destino" placeholder="&lt;raiz-de-dados&gt;/&lt;campanha&gt;/input"
+             style="width:420px;background:var(--card);color:var(--fg);border:1px solid var(--line);
+                    border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:.82rem"></label>
+  </div>
+</section>
+
+<section>
+  <h2>Cadeias</h2>
+  <div id="cadeias"></div>
+  <div class="acoes">
+    <button class="acao" id="add">+ Adicionar cadeia</button>
+    <button class="acao" id="gerar">Gerar YAML</button>
+  </div>
+  <p class="mut" id="aviso" style="display:none"></p>
+</section>
+
+<section id="depois" style="display:none">
+  <h2>E agora?</h2>
+  <p class="lead">
+    O YAML foi escrito. Para rodar a predicao, va em
+    <a href="/executar">Executar</a> &rarr; etapa <b>Boltz-2</b>, informando a
+    pasta de entradas e a de saida. Ela entra na fila como job de <b>GPU</b>, e
+    so comeca com a placa livre.
+  </p>
+</section>
+
+<script>
+(function () {
+  var TIPOS = {{ tipos|tojson }};
+  var FONTES = {{ fontes|tojson }};
+  var elCadeias = document.getElementById('cadeias');
+  var aviso = document.getElementById('aviso');
+  var n = 0;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  function addCadeia() {
+    var letra = String.fromCharCode(65 + n);
+    n += 1;
+    var div = document.createElement('div');
+    div.className = 'job';
+    div.style.display = 'block';
+    div.innerHTML =
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' +
+        '<input class="c-cadeia" value="' + letra + '" size="2" ' +
+          'style="background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 8px;text-align:center">' +
+        '<select class="c-tipo" style="background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px">' +
+          TIPOS.map(function (t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+        '</select>' +
+        '<select class="c-fonte" style="background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:6px 10px">' +
+          Object.keys(FONTES).map(function (f) { return '<option value="' + f + '">' + esc(FONTES[f]) + '</option>'; }).join('') +
+        '</select>' +
+        '<button class="acao c-remover" style="margin-left:auto">remover</button>' +
+      '</div>' +
+      '<textarea class="c-valor" rows="2" placeholder="sequencia, accession UniProt, SMILES ou codigo CCD" ' +
+        'style="width:100%;margin-top:8px;background:var(--bg);color:var(--fg);border:1px solid var(--line);' +
+        'border-radius:6px;padding:8px 10px;font-family:Consolas,monospace;font-size:.78rem"></textarea>';
+    div.querySelector('.c-remover').addEventListener('click', function () { div.remove(); });
+    elCadeias.appendChild(div);
+  }
+
+  document.getElementById('add').addEventListener('click', addCadeia);
+  addCadeia(); addCadeia();   // o caso comum e isca x parceiro
+
+  document.getElementById('gerar').addEventListener('click', function () {
+    var entidades = [];
+    elCadeias.querySelectorAll('.job').forEach(function (d) {
+      entidades.push({
+        cadeia: d.querySelector('.c-cadeia').value.trim(),
+        tipo: d.querySelector('.c-tipo').value,
+        fonte: d.querySelector('.c-fonte').value,
+        valor: d.querySelector('.c-valor').value.trim()
+      });
+    });
+    aviso.style.display = 'block'; aviso.style.color = '';
+    aviso.textContent = 'resolvendo as cadeias e escrevendo o YAML...';
+    fetch('/api/predicao/yaml', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: document.getElementById('nome').value.trim(),
+        destino: document.getElementById('destino').value.trim(),
+        entidades: entidades
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) { throw new Error(res.d.error || res.d.detail || 'falhou'); }
+        var linhas = res.d.cadeias.map(function (c) {
+          return c.cadeia + ' (' + c.tipo + ', ' + c.n_res + ' res' +
+            (c.origem ? ', de ' + esc(c.origem) : '') + ')';
+        }).join(' &middot; ');
+        aviso.innerHTML = 'YAML escrito: <code>' + esc(res.d.yaml) + '</code> (' +
+          res.d.bytes + ' bytes)<br>' + linhas;
+        document.getElementById('depois').style.display = 'block';
+      })
+      .catch(function (e) { aviso.style.color = 'var(--am)'; aviso.textContent = 'falhou: ' + e.message; });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+# =====================================================================
+# Dockerfile.haddock3 -- motor HADDOCK3 do guarda-chuva PPI->docking.
+# ---------------------------------------------------------------------
+# POR QUE ESTE CONTAINER EXISTE
+# O motor de calculo do HADDOCK3 e o CNS (Crystallography and NMR System),
+# que NAO tem build para Windows: as arquiteturas suportadas sao Linux
+# (x86_64 / aarch64) e macOS. O pacote haddock3 no PyPI declara, nos seus
+# classificadores, apenas macOS e POSIX/Linux -- e publica somente sdist,
+# sem wheel para Windows.
+#
+# Instalar haddock3 num ambiente Windows instalaria o pacote Python mas
+# deixaria o motor sem CNS: o `prepare` (logica pura) continuaria funcionando
+# e o `run` falharia -- ou, pior, degradaria. A regra do projeto e NUNCA
+# degradar em silencio, entao o run do HADDOCK3 mora AQUI, num Linux.
+#
+# O QUE NAO ESTA AQUI
+# Nada a montante nem a jusante do docking: a predicao do complexo (Boltz-2) e
+# a dinamica molecular continuam no host, nos ambientes proprios delas. Este
+# container faz UMA coisa: rodar `haddock3 <cfg>`.
+#
+# COMO USAR (o .cfg e o ambig.tbl ja vem prontos do `prepare` no host)
+#   docker build -f docker/Dockerfile.haddock3 -t ppi-haddock3:latest .
+#   docker run --rm -v "$PPI_DOCK_DATA_ROOT/<campanha>/haddock/run-PAR:/work" -w /work \
+#       ppi-haddock3:latest run-PAR.cfg
+# O `-w /work` e essencial: o .cfg referencia receptor.pdb/ligand.pdb/ambig.tbl
+# por NOME (caminho relativo), justamente para que o mesmo arquivo funcione no
+# host e dentro do container, sem traduzir caminho de Windows para Linux.
+#
+# LICENCA -- LER ANTES DE VENDER RODADA COMO SERVICO
+# O CNS e gratuito para uso academico / sem fins lucrativos. Uso COMERCIAL
+# exige licenciamento proprio junto aos detentores do CNS. Isso importa para o
+# piloto de monetizacao (ver DECISIONS D-0010/D-0013): conferir a licenca antes
+# de oferecer HADDOCK3 como servico pago.
+# =====================================================================
+FROM python:3.11-slim
+
+# Metadados OCI. O `image.source` e o que liga o pacote publicado ao
+# repositorio no GitHub (sem ele, o pacote aparece solto na conta).
+#
+# NAO declaramos `image.licenses`: o CONTEUDO desta imagem e software de
+# TERCEIROS -- Debian, Python e haddock3/CNS, cada um sob a propria licenca.
+# A licenca deste repositorio cobre a RECEITA (este Dockerfile e o codigo do
+# funil), nao o que o pip e o apt instalam aqui dentro. Rotular a imagem com
+# ela seria afirmar algo falso sobre o haddock3 e o Debian.
+LABEL org.opencontainers.image.title="ppi-haddock3" \
+      org.opencontainers.image.description="HADDOCK3 (CNS) runner for the Platform_ppi_docking confidence funnel. Contains third-party software (Debian, Python, haddock3/CNS), each under its own license; this image carries no file from the repository and no data." \
+      org.opencontainers.image.source="https://github.com/luizdione/Platform_ppi_docking" \
+      org.opencontainers.image.url="https://github.com/luizdione/Platform_ppi_docking" \
+      org.opencontainers.image.documentation="https://github.com/luizdione/Platform_ppi_docking#haddock3" \
+      org.opencontainers.image.authors="Luiz Dione Barbosa De-Melo <luiz.melo@ifrj.edu.br>" \
+      org.opencontainers.image.vendor="Instituto Federal de Educacao, Ciencia e Tecnologia do Rio de Janeiro (IFRJ)" \
+      org.opencontainers.image.version="0.1.0"
+
+# tcsh: os scripts do CNS sao csh. gfortran/build-essential: recompilar o CNS
+# caso o executavel que vem com o pip nao case com as libs desta imagem.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        gfortran \
+        tcsh \
+        curl \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+
+# haddock3 publica so sdist (sem wheel), entao o build compila aqui mesmo.
+RUN pip install --upgrade pip && pip install haddock3
+
+# ------------------------------------------------------------------
+# SANIDADE EM BUILD TIME (fail-loud): se o haddock3 nao responder ou o CNS
+# nao estiver executavel, o BUILD quebra aqui -- e nao na hora de rodar um par
+# real, depois de horas de pipeline. Mesmo padrao do Dockerfile do
+# docking_suite_platform, que valida o Vina no build.
+# ------------------------------------------------------------------
+RUN haddock3 --version
+
+# Localiza o executavel do CNS entregue pelo pacote e confere que ele RODA.
+# ATENCAO ao nome: os binarios do CNS NAO se chamam "cns" -- vem nomeados por
+# ARQUITETURA dentro de `haddock/cns/bin/`:
+#     x86_64-linux.bin  aarch64-linux.bin  x86_64-darwin.bin  arm64-darwin.bin
+# (procurar por `-name 'cns*'` nao acha nada e da falso negativo).
+RUN set -eu; \
+    CNS_DIR="$(python -c 'import haddock,pathlib;print(pathlib.Path(haddock.__file__).parent/"cns"/"bin")')"; \
+    ARCH="$(uname -m)"; \
+    CNS_BIN="$CNS_DIR/${ARCH}-linux.bin"; \
+    echo "--- CNS esperado para $ARCH: $CNS_BIN ---"; \
+    if [ ! -f "$CNS_BIN" ]; then \
+        echo "ERRO: sem binario do CNS para a arquitetura $ARCH."; \
+        echo "Disponiveis na imagem:"; ls -1 "$CNS_DIR" || true; \
+        exit 1; \
+    fi; \
+    chmod +x "$CNS_BIN"; \
+    echo "--- teste de EXECUCAO (pega libs faltando, nao so o arquivo) ---"; \
+    printf 'stop\n' | "$CNS_BIN" > /tmp/cns_smoke.log 2>&1 || { \
+        echo "ERRO: o binario do CNS existe mas NAO executa nesta imagem"; \
+        echo "(tipicamente biblioteca compartilhada faltando). Saida:"; \
+        tail -n 20 /tmp/cns_smoke.log; \
+        echo "Nesse caso e preciso recompilar o CNS -- ver docs/CNS.md do haddock3."; \
+        exit 1; \
+    }; \
+    grep -qi "CNS" /tmp/cns_smoke.log || { \
+        echo "ERRO: o CNS rodou mas nao se identificou na saida:"; \
+        tail -n 20 /tmp/cns_smoke.log; exit 1; }; \
+    echo "CNS OK em: $CNS_BIN"; \
+    head -n 3 /tmp/cns_smoke.log; \
+    echo "$CNS_BIN" > /opt/cns_path.txt
+
+# Diretorio de trabalho padrao: a pasta do par, montada como volume.
+WORKDIR /work
+
+# `docker run ... ppi-haddock3 run-PAR.cfg` -> `haddock3 run-PAR.cfg`
+ENTRYPOINT ["haddock3"]
+CMD ["--help"]

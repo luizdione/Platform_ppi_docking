@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block titulo %}Pontuando {{ sub.name }}...{% endblock %}
+{% block cabecalho %}{{ sub.name }}{% endblock %}
+{% block subtitulo %}<span class="tag">{{ sub.key }}</span> &middot; pontuando os pares{% endblock %}
+
+{% block conteudo %}
+<section>
+  <h2 id="titulo">Pontuando os pares...</h2>
+  <p class="lead">
+    Cada par passa pelo motor <code>ppi.score</code> (que calcula BSA por SASA) e
+    pelo parser de interface. Num subprojeto grande isso leva <b>alguns minutos</b>
+    na primeira vez.
+  </p>
+  <p class="lead">
+    O resultado fica guardado em disco, entao <b>so acontece uma vez</b> por versao
+    do dado - depois a pagina abre na hora, mesmo apos reiniciar o servidor.
+  </p>
+
+  <div class="recursos">
+    <div class="rec" id="cartao">
+      estado <b id="estado">{{ situacao.estado }}</b>
+      <span id="tempo" class="mut">
+        {%- if situacao.desde_s is defined %} &middot; ha {{ situacao.desde_s }} s{% endif -%}
+      </span>
+    </div>
+  </div>
+
+  <p class="mut" id="aviso">Esta pagina se atualiza sozinha.</p>
+
+  <div class="acoes">
+    <a class="acao" href="/" style="text-decoration:none">&larr; Painel</a>
+  </div>
+</section>
+
+<script>
+(function(){
+  var key = {{ sub.key|tojson }};
+  var elEstado = document.getElementById('estado');
+  var elTempo  = document.getElementById('tempo');
+  var elCartao = document.getElementById('cartao');
+  var elAviso  = document.getElementById('aviso');
+
+  function tick(){
+    fetch('/estado/' + encodeURIComponent(key))
+      .then(function(r){ return r.json(); })
+      .then(function(s){
+        elEstado.textContent = s.estado;
+        elTempo.textContent = (s.desde_s != null) ? (' · ha ' + s.desde_s + ' s') : '';
+        if (s.estado === 'pronto') {
+          elAviso.textContent = 'Pronto - abrindo...';
+          window.location.reload();
+          return;
+        }
+        if (s.estado === 'falhou') {
+          elCartao.classList.add('alerta');
+          elAviso.textContent = 'Falhou: ' + (s.erro || 'motivo nao informado');
+          return;   // para de perguntar: erro nao se resolve sozinho
+        }
+        setTimeout(tick, 3000);
+      })
+      .catch(function(){ setTimeout(tick, 5000); });
+  }
+  setTimeout(tick, 1500);
+})();
+</script>
+{% endblock %}

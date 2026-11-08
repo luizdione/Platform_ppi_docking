@@ -1,0 +1,110 @@
+# Limiares dos portoes do funil - FONTE UNICA dos numeros.
+#
+# Dialeto DOCUMENTADO (gate_* -> criterios -> <nome> -> {valor, texto}), que
+# `funnel.gate._achatar_yaml` entende e a aba Ajuda da GUI exibe. Os nomes de
+# criterio validos sao os de `funnel.gate._ALIAS_YAML`; qualquer outro nome
+# derruba o carregamento com erro claro (nunca e ignorado em silencio).
+#
+# `valor: null` = limiar ainda nao acordado: o gate cai no default embutido e
+# emite RuntimeWarning dizendo qual numero entrou no lugar.
+
+gate_boltz:
+  descricao: >-
+    Portao de confianca estrutural aplicado a saida do Boltz-2. Aprova o par
+    para o refinamento no HADDOCK3. Os criterios decisivos sao conjuntivos (E)
+    e reprovam quando a metrica esta ausente.
+  criterios:
+    ipsae_min:
+      valor: 0.15
+      texto: >-
+        ipSAE >= 0.15. Este piso veio de uma curadoria manual de pares, feita
+        antes de o funil existir, e e deliberadamente BAIXO: ele descarta o
+        lixo, nao escolhe o melhor. Recalibre-o para o seu sistema.
+        O ipSAE (Dunbrack et al., 2025) e o pTM
+        restrito a pares inter-cadeia com PAE abaixo do corte: penaliza
+        interface pequena ou mal resolvida, que o ipTM global mascara.
+    coverage_core_face_min:
+      valor: 0.50
+      texto: >-
+        Cobertura da face nuclear >= 50%: fracao dos residuos de interface da
+        isca que caem na sub-regiao declarada como face de interacao legitima
+        (bloco ``chain_roles`` da campanha). Abaixo disso a interface esta
+        espalhada numa face improdutiva.
+    require_canonical_face:
+      valor: true
+      texto: >-
+        Exige face de interacao canonica. Com faces_aceitas vazio, vale a regra
+        generica "o rotulo contem 'canonica'".
+    faces_aceitas:
+      valor: ["nuclear (canonica)"]
+      texto: >-
+        Lista branca de rotulos de face aceitos nesta campanha. Os rotulos sao
+        os da SUA planilha de scores; qualquer outro valor (ex.: uma face que
+        voce considera atipica) ou celula vazia reprova.
+    iface_iptm_min:
+      valor: 0.50
+      texto: >-
+        ipTM de interface minimo. Espelha `scoring_engine.config.SCORE.iptm_maybe` para o
+        guarda-chuva nao divergir do motor. Metrica secundaria.
+    pae_iface_max:
+      valor: 10.0
+      texto: >-
+        PAE medio de interface maximo, em angstrom. Espelha
+        `scoring_engine.config.SCORE.pae_iface_max`. Metrica secundaria.
+    min_contacts:
+      valor: 10
+      texto: >-
+        Numero minimo de contatos inter-cadeia (< 5 A). Espelha
+        `scoring_engine.config.SCORE.min_contacts`. Metrica secundaria.
+    strict_missing:
+      valor: false
+      texto: >-
+        Se true, qualquer metrica SECUNDARIA ausente tambem reprova. Com false,
+        ausencia de secundaria vira aviso nos motivos - os criterios decisivos
+        (ipSAE, cobertura, face) reprovam quando ausentes de qualquer modo.
+  ausencia: >-
+    Metrica ausente (celula vazia na planilha, PAE nao lido) NAO vira zero e NAO
+    vira aprovacao: o par e reprovado com o motivo explicito "<metrica> ausente".
+
+gate_haddock:
+  descricao: >-
+    Portao de convergencia aplicado ao caprieval do HADDOCK3 contra o .cif do
+    Boltz usado como referencia (DockQ / iRMSD por cluster). Por padrao aprova
+    por DockQ OU iRMSD - sao duas expressoes da mesma fronteira CAPRI.
+  criterios:
+    dockq_min:
+      valor: 0.23
+      texto: >-
+        DockQ >= 0.23 = fronteira CAPRI "acceptable" (Basu & Wallner, PLoS ONE
+        2016): < 0.23 incorrect; 0.23-0.49 acceptable; 0.49-0.80 medium;
+        >= 0.80 high. E o piso para o modelo valer o custo de uma MD.
+    irmsd_max:
+      valor: 4.0
+      texto: >-
+        iRMSD de interface <= 4.0 A - a mesma fronteira "acceptable" no criterio
+        classico do CAPRI.
+    require_both_capri:
+      valor: false
+      texto: >-
+        Se true, exige DockQ E iRMSD simultaneamente (criterio mais duro).
+  ausencia: >-
+    Sem tabela caprieval nao ha veredicto: o par fica pendente com motivo
+    explicito, jamais aprovado por omissao.
+
+haddock3:
+  protein_protein: true
+  # A referencia do caprieval e um PDB do COMPLEXO (receptor A + ligante C, sem
+  # hetero/cofatores), derivado do .cif do Boltz por `funnel.split.reference_pdb`.
+  # NAO e o .cif: o haddock3 le a referencia fatiando COLUNAS DE PDB
+  # (libpdb.slc_resseq = slice(22,26)) e nao tem parser de mmCIF -- passar o
+  # .cif levanta "invalid literal for int() with base 10: ' A -'" em cada worker
+  # e derruba o modulo caprieval inteiro.
+  caprieval_reference: "<pdbs/reference.pdb gerado do .cif do proprio par>"
+  # Leitura do resultado: use `funnel.gate.read_capri_clt(path)`, nunca
+  # csv.DictReader direto -- o haddock3 escreve 13 linhas de comentario '#'
+  # antes do cabecalho, e o parser ingenuo faria o GATE 2 reprovar por
+  # "dado faltante" um docking perfeitamente valido.
+  observacao: >-
+    No Windows o binario haddock3 nao roda (o CNS, motor de calculo, so tem
+    build para Linux/macOS). Nesse caso o `run()` usa a imagem `ppi-haddock3`
+    via `funnel.haddock_docker`; `prepare()` e logica pura e independe disso.

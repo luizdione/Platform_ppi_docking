@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block titulo %}Jobs - painel PPI{% endblock %}
+{% block cabecalho %}Jobs{% endblock %}
+{% block subtitulo %}fila, historico e log ao vivo{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <h2>Recursos da maquina</h2>
+  <div class="recursos" id="recursos"></div>
+  <p class="mut" style="font-size:.8rem">
+    Job pesado so entra com <b>&ge;20% de RAM livre</b>; job de GPU so entra com a
+    placa desocupada. Enquanto nao der, ele espera na fila em vez de derrubar a
+    maquina. Limites simultaneos: <b>gpu 1</b> &middot; <b>cpu_heavy 1</b> &middot; <b>leve 4</b>.
+  </p>
+</section>
+
+<section>
+  <h2>Fila e historico</h2>
+  <div id="lista">
+    {% if not jobs %}
+    <p class="mut">Nenhum job ainda. Dispare um pela pagina de um subprojeto.</p>
+    {% endif %}
+  </div>
+</section>
+
+<section id="secao-log" style="display:none">
+  <h2>Log <span class="mut" id="log-titulo"></span></h2>
+  <div class="log" id="log"></div>
+  <div class="acoes">
+    <button class="acao" id="fechar-log">Fechar</button>
+    <button class="acao perigo" id="cancelar-job">Cancelar este job</button>
+  </div>
+</section>
+
+<script src="/static/jobs.js"></script>
+{% endblock %}

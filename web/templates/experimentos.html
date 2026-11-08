@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block titulo %}Experimentos - painel PPI{% endblock %}
+{% block cabecalho %}Experimentos{% endblock %}
+{% block subtitulo %}receitas declarativas do projeto-alvo{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <p class="lead">
+    Uma <b>receita</b> descreve, num arquivo, um conjunto de predicoes a rodar
+    (quais iscas, quais parceiros, quais cofatores). Ela e escrita a mao no
+    projeto-alvo e lida aqui -- o painel nao inventa receita, so executa a que
+    voce declarou.
+  </p>
+
+  {% if not ponte.ok %}
+    <h2>Motor indisponivel</h2>
+    <p class="lead">{{ ponte.erro }}</p>
+  {% elif erro %}
+    <h2>Falha ao ler as receitas</h2><p class="lead">{{ erro }}</p>
+  {% elif not dados.alvo %}
+    <h2>Nenhum projeto-alvo definido</h2>
+    <p class="lead">
+      As receitas moram na pasta do projeto-alvo, apontada pela variavel de
+      ambiente <code>PPI_TARGET_DIR</code>. Sem ela, nao ha onde procurar.
+      Defina a variavel e recarregue esta pagina.
+    </p>
+  {% else %}
+    <h2>Receitas em {{ dados.alvo }}</h2>
+    {% if dados.receitas %}
+    <table class="tab" style="max-width:760px">
+      <thead><tr><th>Receita</th><th>Caminho</th></tr></thead>
+      <tbody>
+      {% for r in dados.receitas %}
+        <tr>
+          <td>{{ r.nome }}</td>
+          <td style="text-align:left"><span class="mut" style="font-size:.78rem">{{ r.caminho }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p class="mut" style="font-size:.8rem">
+      Para rodar uma receita, gere os YAML dela e depois dispare a predicao pela
+      aba <a href="/executar">Executar</a> (etapa <b>Boltz-2</b>), apontando a
+      pasta de entradas gerada.
+    </p>
+    {% else %}
+    <p class="lead">Nenhuma receita encontrada em <code>{{ dados.alvo }}</code>.</p>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

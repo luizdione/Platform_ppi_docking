@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block titulo %}Ajuda - painel PPI{% endblock %}
+{% block cabecalho %}Ajuda e tutoriais{% endblock %}
+{% block subtitulo %}como ler os indices, as cores do 3D e cada etapa do funil{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <form method="get" action="/ajuda" class="acoes" style="align-items:center">
+    <input type="search" name="q" value="{{ consulta }}" placeholder="buscar nos manuais..."
+           style="flex:1 1 320px; background:var(--card); color:var(--fg);
+                  border:1px solid var(--line); border-radius:8px; padding:9px 14px;
+                  font-size:.86rem">
+    <button class="acao" type="submit">Buscar</button>
+    {% if consulta %}<a class="acao" href="/ajuda" style="text-decoration:none">Limpar</a>{% endif %}
+  </form>
+
+  {% if consulta %}
+    <h2>Busca por "{{ consulta }}"</h2>
+    {% if achados %}
+      {% for a in achados %}
+      <div class="job" style="display:block">
+        <a href="/ajuda?doc={{ a.id }}"><b>{{ a.titulo }}</b></a>
+        <span class="mut" style="font-size:.76rem"> &middot; {{ a.ocorrencias }} ocorrencia(s)</span>
+        <div class="mut" style="font-size:.8rem; margin-top:6px">{{ a.trecho }}</div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="mut">Nada encontrado nos {{ documentos|length }} documentos.</p>
+    {% endif %}
+  {% endif %}
+</section>
+
+{% if doc %}
+<section>
+  <h2>{{ doc.titulo }}</h2>
+  <p class="mut" style="font-size:.78rem">{{ doc.caminho }}</p>
+  <div class="help doc">{{ doc.html|safe }}</div>
+  <div class="acoes"><a class="acao" href="/ajuda" style="text-decoration:none">&larr; Todos os documentos</a></div>
+</section>
+{% else %}
+<section>
+  <h2>Documentos</h2>
+  {% if documentos %}
+  <div class="grid">
+    {% for d in documentos %}
+    <a class="card" href="/ajuda?doc={{ d.id }}">
+      <h2 style="font-size:1rem">{{ d.titulo }}</h2>
+      <div class="meta">{{ d.kb }} KB</div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="lead">
+    Nenhum documento encontrado -- e o esperado numa instalacao nova: nenhuma
+    documentacao acompanha o repositorio. Ponha os seus <code>.md</code> em
+    <code>docs/</code>, ou aponte a variavel de ambiente
+    <code>PPI_DOCS_DIRS</code> para as pastas onde eles estao (separadas pelo
+    separador de caminhos do sistema).
+  </p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,141 @@
+
+:root{ --bg:#0a1626; --card:#0d1828; --line:#1e4080; --fg:#e8f4fa; --mut:#8b9bb0;
+  --cy:#58a6ff; --gr:#3fb950; --am:#e0a020; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:linear-gradient(160deg,#0a1626,#0c1a30); color:var(--fg);
+  font-family:'Segoe UI',Inter,system-ui,Arial,sans-serif; min-height:100vh; }
+a{ color:var(--cy); }
+.wrap{ max-width:1080px; margin:0 auto; padding:28px 22px 64px; }
+header{ display:flex; align-items:flex-start; gap:18px; border-bottom:1px solid var(--line);
+  padding-bottom:16px; flex-wrap:wrap; }
+header .brand{ flex:1 1 320px; }
+h1{ font-size:1.42rem; margin:0 0 4px; }
+h2{ font-size:1.15rem; }
+.sub{ color:var(--mut); font-size:.9rem; }
+.author{ color:var(--mut); font-size:.82rem; margin-top:6px; }
+.ro{ display:inline-block; margin-top:10px; padding:5px 12px; border:1px solid var(--gr);
+  border-radius:20px; color:var(--gr); font-size:.76rem; font-weight:600; }
+.langtog{ margin-left:auto; }
+.langtog button{ background:var(--card); color:var(--fg); border:1px solid var(--line);
+  border-radius:8px; padding:6px 12px; cursor:pointer; font-size:.82rem; }
+.langtog button.active{ border-color:var(--cy); color:var(--cy); font-weight:700; }
+.lead{ color:var(--mut); margin:22px 0 6px; line-height:1.6; }
+section{ margin-top:30px; }
+section > h2{ border-left:3px solid var(--cy); padding-left:10px; }
+.grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; margin-top:22px; }
+.card{ background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px;
+  text-decoration:none; color:inherit; display:block; transition:transform .12s,border-color .12s; }
+.card:hover{ transform:translateY(-3px); border-color:var(--cy); }
+.tag{ font-family:Consolas,monospace; color:var(--cy); font-weight:700; font-size:.86rem; }
+.card p{ color:var(--mut); font-size:.86rem; line-height:1.5; margin:6px 0 10px; }
+.meta{ font-size:.78rem; color:var(--mut); }
+.go{ display:inline-block; margin-top:10px; color:var(--cy); font-weight:600; font-size:.88rem; }
+.downloads{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+.dl{ background:var(--card); border:1px solid var(--line); border-radius:8px; padding:8px 12px;
+  font-size:.82rem; text-decoration:none; color:var(--cy); }
+.dl:hover{ border-color:var(--cy); }
+/* --- Botao/banner do relatorio HTML completo (call-to-action) --- */
+.report-cta{ display:flex; align-items:center; gap:14px; margin:16px 0 6px; padding:14px 18px;
+  background:linear-gradient(135deg,#123a6b,#0b2648); border:1px solid var(--cy); border-radius:12px;
+  text-decoration:none; color:var(--fg); box-shadow:0 2px 10px rgba(0,0,0,.3); transition:.15s; }
+.report-cta:hover{ background:linear-gradient(135deg,#164a86,#0d2f5c); transform:translateY(-1px); }
+.report-cta .rc-ic{ font-size:1.9rem; line-height:1; }
+.report-cta .rc-tx b{ color:#fff; font-size:1.04rem; }
+.report-cta .rc-tx small{ color:#b9cbe4; }
+.charts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:18px; }
+figure.chart{ margin:0; background:#fff; color:#33404f; border:1px solid var(--line); border-radius:10px; padding:10px; }
+figure.chart img{ width:100%; height:auto; display:block; }
+figure.chart figcaption{ color:#33404f; font-size:.78rem; margin-top:6px; text-align:center; }
+/* O fundo branco existe porque este wrapper normalmente envolve um PNG de fundo
+   transparente (a tabela de indices e imagem). Quando ele envolve uma TABELA
+   HTML - a CAPRI do HADDOCK, o resumo da MD - o branco deixava texto claro sobre
+   fundo claro, ilegivel. Duas defesas: a tabela pinta o proprio fundo (funciona
+   em qualquer navegador) e o wrapper escurece quando contem tabela. */
+.tablewrap{ overflow-x:auto; background:#fff; color:#33404f; border:1px solid var(--line); border-radius:10px; padding:10px; }
+.tablewrap img{ max-width:100%; height:auto; display:block; }
+.tablewrap:has(table){ background:var(--card); color:var(--fg); }
+.viewer-row{ display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; }
+#viewport{ position:relative; width:100%; max-width:640px; height:460px; background:#0b1220;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.vpanel{ flex:1 1 260px; min-width:240px; }
+select, .btn{ font-size:.86rem; }
+select{ width:100%; padding:8px; background:var(--card); color:var(--fg);
+  border:1px solid var(--line); border-radius:8px; }
+.btn{ background:var(--card); color:var(--cy); border:1px solid var(--line);
+  border-radius:8px; padding:8px 12px; cursor:pointer; margin:6px 6px 0 0; }
+.btn:hover{ border-color:var(--cy); }
+.kv{ font-size:.82rem; color:var(--mut); line-height:1.7; margin-top:12px; }
+.kv b{ color:var(--fg); }
+.badge{ display:inline-block; font-size:.72rem; padding:2px 9px; border-radius:10px; font-weight:700; }
+.b-HIT{ background:#12351f; color:var(--gr); border:1px solid #1f6b39; }
+.b-MAYBE{ background:#3a2f12; color:var(--am); border:1px solid #6b551f; }
+.b-weak{ background:#20262e; color:var(--mut); border:1px solid #2c3642; }
+footer{ margin-top:48px; color:var(--mut); font-size:.78rem; border-top:1px solid var(--line);
+  padding-top:16px; line-height:1.6; }
+.back{ font-size:.84rem; }
+/* --- toggle de cor do viewer + legenda pLDDT --- */
+.vtools{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0 4px;
+  font-size:.8rem; color:var(--mut); }
+.btn.cmode.active, .btn.hmode.active{ border-color:var(--cy); color:var(--cy); font-weight:700; }
+.plddt-legend{ font-size:.76rem; color:var(--mut); margin:4px 0 2px; }
+.plddt-legend .pl{ display:inline-block; padding:2px 7px; margin-right:2px; border-radius:4px;
+  color:#0b1220; font-weight:700; }
+.pl-lo{ background:#ff7d45; } .pl-mid{ background:#ffdb13; }
+.pl-hi{ background:#65cbf3; } .pl-vhi{ background:#0053d6; color:#fff; }
+#hviewport{ position:relative; width:100%; max-width:640px; height:460px; background:#0b1220;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+/* --- tabela CAPRI (HADDOCK) --- caixa BRANCA + texto PRETO (legibilidade;
+   antes era fundo escuro/texto claro e ficava ilegivel; aguenta qualquer cascata) --- */
+.tablewrap.dark{ background:#fff; color:#1a1a1a; }
+table.capri{ border-collapse:collapse; width:100%; font-size:.82rem; color:#1a1a1a;
+  background:#fff; }
+table.capri th{ text-align:left; padding:6px 10px; border-bottom:2px solid #c9d3e0;
+  background:#f2f4f7; color:#0b3a66; font-weight:700; white-space:nowrap; }
+table.capri td{ padding:5px 10px; color:#1a1a1a; border-bottom:1px solid #dde3ec; }
+table.capri tr.best{ background:#e6f5ec; }
+table.capri tr.best td{ color:#0b3a1a; font-weight:600; }
+/* --- seletor de par da secao HADDOCK (multi-par) --- */
+#hpair{ background:#fff; color:#1a1a1a; border:1px solid #c9d3e0; border-radius:6px;
+  padding:5px 8px; font-size:.84rem; max-width:100%; min-width:min(560px,100%); }
+#hpair option{ background:#fff; color:#1a1a1a; }
+.hpair-table[hidden]{ display:none; }
+/* --- caixa do GATE DE REDOCKING: controle de protocolo, NAO resultado --- */
+/* Cores explicitas (fundo + texto) de proposito: esta plataforma ja teve o bug
+   branco-no-branco por herdar var(--fg) claro sobre fundo que nao pegava. */
+.gatebox{ background:#fff8e6; color:#3a2c05; border:1px solid #e0c168;
+  border-left:5px solid #d99b12; border-radius:8px; padding:12px 16px; margin:18px 0 4px; }
+.gatebox h3{ margin:0 0 6px; font-size:.95rem; color:#7a5205; font-weight:700; }
+.gatebox .kv{ color:#3a2c05; font-size:.84rem; margin:0; line-height:1.5; }
+.gatebox b{ color:#7a5205; }
+/* --- cascata / proximos passos --- */
+.cascade{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; margin-top:14px; }
+.casc-col h3{ font-size:.92rem; margin:0 0 8px; color:var(--fg); }
+ul.casc{ list-style:none; padding:0; margin:0; }
+ul.casc li{ font-size:.84rem; line-height:1.5; margin-bottom:10px; color:var(--mut);
+  display:flex; gap:8px; align-items:flex-start; }
+.dot{ font-weight:700; flex:0 0 auto; }
+.dot-ok{ color:var(--gr); } .dot-na{ color:var(--mut); } .dot-todo{ color:var(--am); }
+ul.casc li.ok span:last-child{ color:var(--fg); }
+/* --- dinamica molecular (MD) --- caixa BRANCA + texto PRETO (legibilidade) --- */
+table.mdsum{ border-collapse:collapse; width:100%; font-size:.82rem; color:#1a1a1a;
+  background:#fff; }
+table.mdsum th{ text-align:left; padding:5px 10px; color:#0b3a66; font-weight:700;
+  white-space:nowrap; border-bottom:1px solid #dde3ec; width:44%; vertical-align:top; }
+table.mdsum td{ padding:5px 10px; color:#1a1a1a; border-bottom:1px solid #dde3ec; }
+table.mdsum code{ font-size:.9em; color:#33506e; }
+#mdviewport{ position:relative; width:100%; max-width:640px; height:460px; background:#0b1220;
+  border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.md-note{ color:var(--am); font-size:.82rem; line-height:1.5; margin:16px 0 6px; }
+/* --- pagina de ajuda --- */
+.help h2{ border-left:3px solid var(--cy); padding-left:10px; margin-top:34px; }
+.help h3{ color:var(--cy); font-size:1rem; margin-top:22px; }
+.help table{ border-collapse:collapse; width:100%; font-size:.84rem; margin:10px 0; }
+.help th,.help td{ text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); }
+.help th{ color:var(--cy); }
+.help p, .help li{ line-height:1.6; color:var(--fg); }
+.help .note{ color:var(--mut); font-size:.82rem; }
+.plddt-bar{ display:flex; height:26px; border-radius:6px; overflow:hidden; max-width:520px; margin:10px 0 4px; }
+.plddt-bar div{ flex:1; display:flex; align-items:center; justify-content:center;
+  font-size:.72rem; font-weight:700; color:#0b1220; }
+.pae-demo{ display:grid; grid-template-columns:repeat(6,1fr); gap:2px; max-width:220px; margin:8px 0; }
+.pae-demo span{ aspect-ratio:1; border-radius:2px; }

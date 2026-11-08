@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Platform_ppi_docking: a confidence funnel from AI-predicted protein-protein complexes to MD-ready refined pairs"
+abstract: >-
+  A thin orchestration layer that chains an already-computed Boltz-2 complex
+  prediction into confidence scoring (ipTM, interface ipTM, ipSAE, interface PAE,
+  interface pLDDT, BSA, contacts), a first confidence gate, flexible refinement
+  in HADDOCK3 driven by interface-derived ambiguous restraints, a second gate on
+  the caprieval DockQ/i-RMSD, and a pair declared ready for molecular dynamics.
+  The repository contains code and configuration only: no research data and no
+  results.
+type: software
+authors:
+  - family-names: "De-Melo"
+    given-names: "Luiz Dione Barbosa"
+    orcid: "https://orcid.org/0000-0003-2445-9943"
+    email: "luiz.melo@ifrj.edu.br"
+    affiliation: "Instituto Federal de Educação, Ciência e Tecnologia do Rio de Janeiro (IFRJ), Rio de Janeiro, Brasil"
+version: "0.1.0"
+date-released: "2026-11-08"
+license-url: "https://github.com/luizdione/Platform_ppi_docking/blob/main/LICENSE"
+repository-code: "https://github.com/luizdione/Platform_ppi_docking"
+url: "https://github.com/luizdione/Platform_ppi_docking"
+keywords:
+  - protein-protein interaction
+  - structural bioinformatics
+  - protein complex prediction
+  - Boltz-2
+  - HADDOCK3
+  - molecular docking
+  - ipSAE
+  - DockQ
+  - molecular dynamics

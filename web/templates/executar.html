@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block titulo %}Executar - painel PPI{% endblock %}
+{% block cabecalho %}Executar{% endblock %}
+{% block subtitulo %}a cascata inteira, ou uma etapa por vez{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <h2>Subprojeto</h2>
+  <div class="acoes">
+    <select id="subprojeto" style="background:var(--card); color:var(--fg);
+            border:1px solid var(--line); border-radius:8px; padding:9px 14px; font-size:.86rem">
+      {% for s in subprojetos %}
+      <option value="{{ s.key }}">{{ s.key }} - {{ s.name }}</option>
+      {% endfor %}
+    </select>
+    <a class="acao" href="/jobs" style="text-decoration:none">Ver jobs</a>
+  </div>
+  <p class="mut" style="font-size:.8rem">
+    A etapa entra na <b>fila</b> e so comeca quando houver vaga da classe dela e
+    a maquina aguentar (GPU livre, RAM &ge;20%). Nada roda "por cima" de nada.
+  </p>
+</section>
+
+<!-- ------------------------------------------------------------------ -->
+<section>
+  <h2>Cascata</h2>
+  <p class="lead">
+    Marque as etapas e use <b>Rodar sequencia</b> para encadear: cada uma so
+    comeca quando a anterior <b>concluir</b>, e se uma falhar as seguintes sao
+    canceladas. Ou use <b>Rodar so esta</b> para disparar uma etapa avulsa, fora
+    da esteira.
+  </p>
+
+  <div id="etapas"></div>
+
+  <div class="acoes">
+    <button class="acao" id="btn-seq">Rodar sequencia (etapas marcadas)</button>
+    <button class="acao" id="btn-marcar">Marcar todas</button>
+    <button class="acao" id="btn-limpar">Desmarcar todas</button>
+  </div>
+  <p class="mut" id="aviso" style="display:none"></p>
+</section>
+
+<script>
+(function () {
+  var ETAPAS = {{ etapas|tojson }};
+  var elEtapas = document.getElementById('etapas');
+  var elSub = document.getElementById('subprojeto');
+  var aviso = document.getElementById('aviso');
+
+  /* Campos que cada etapa precisa. Nao inventamos caminho: o autor informa,
+     porque a pasta de MD/entrada varia por par e por subprojeto. */
+  var CAMPOS = {
+    boltz: [
+      { n: 'inputs',  r: 'Pasta de entradas (YAML)', ph: '<raiz-de-dados>/<campanha>/input' },
+      { n: 'results', r: 'Pasta de saida',           ph: '<raiz-de-dados>/<campanha>/results' }
+    ],
+    funil: [],
+    haddock: [],
+    md: [
+      { n: 'run',    r: 'Pose de origem (boltz_results_* ou .cif)', ph: 'E:\\...\\boltz_results_<par>' },
+      { n: 'md_dir', r: 'Pasta de saida da MD',                     ph: 'E:\\...\\md\\<par>' },
+      { n: 'ns',     r: 'ns por replica (vazio = padrao do tier)',  ph: '10' },
+      { n: 'replicas', r: 'Replicas',                               ph: '3' }
+    ],
+    energia: [
+      { n: 'alvo',  r: 'Pasta da MD (trajetoria) ou run/.cif (pose)', ph: 'E:\\...\\md\\<par>' },
+      { n: 'saida', r: 'Pasta de trabalho (so no modo pose)',         ph: 'E:\\...\\mmgbsa\\<par>' }
+    ]
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+
+  elEtapas.innerHTML = ETAPAS.map(function (e, i) {
+    var campos = (CAMPOS[e.id] || []).map(function (c) {
+      return '<label style="display:block;margin:6px 0;font-size:.8rem">' +
+        '<span class="mut">' + esc(c.r) + '</span><br>' +
+        '<input data-etapa="' + e.id + '" data-campo="' + c.n + '" placeholder="' + esc(c.ph) + '" ' +
+        'style="width:100%;max-width:560px;background:var(--bg);color:var(--fg);' +
+        'border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-size:.8rem;' +
+        'font-family:Consolas,monospace"></label>';
+    }).join('');
+    var extra = '';
+    if (e.id === 'md') {
+      extra = '<label style="font-size:.8rem"><input type="checkbox" data-etapa="md" data-campo="fresh"> ' +
+        'recomecar do zero (<b>descarta</b> o progresso; o padrao e retomar)</label>';
+    }
+    if (e.id === 'energia') {
+      extra = '<label style="font-size:.8rem"><input type="checkbox" data-etapa="energia" data-campo="pose" checked> ' +
+        'modo pose (rescoring rapido, sem MD)</label>';
+    }
+    return '<div class="job" style="display:block">' +
+      '<div style="display:flex;align-items:center;gap:12px">' +
+        '<input type="checkbox" class="marca" data-etapa="' + e.id + '">' +
+        '<span class="st st-queued">' + (i + 1) + '</span>' +
+        '<div style="flex:1">' +
+          '<div class="nome">' + esc(e.titulo) + '</div>' +
+          '<div class="mut" style="font-size:.76rem">classe <b>' + esc(e.classe) + '</b> &middot; ' + esc(e.descricao) + '</div>' +
+        '</div>' +
+        '<button class="acao" data-so="' + e.id + '">Rodar so esta</button>' +
+      '</div>' +
+      (campos || extra ? '<div style="margin-top:8px">' + campos + extra + '</div>' : '') +
+      '</div>';
+  }).join('');
+
+  function params(etapa) {
+    var p = {};
+    document.querySelectorAll('[data-etapa="' + etapa + '"][data-campo]').forEach(function (el) {
+      var v = (el.type === 'checkbox') ? el.checked : el.value.trim();
+      if (v !== '' && v !== false) { p[el.getAttribute('data-campo')] = v; }
+    });
+    return p;
+  }
+
+  function mostra(txt, erro) {
+    aviso.style.display = 'block';
+    aviso.style.color = erro ? 'var(--am)' : '';
+    aviso.innerHTML = txt;
+  }
+
+  function post(url, corpo, rotulo) {
+    mostra('enfileirando ' + rotulo + '...');
+    return fetch(url, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(corpo)
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) { throw new Error(res.d.error || res.d.detail || 'falhou'); }
+        return res.d;
+      })
+      .catch(function (e) { mostra('falhou: ' + esc(e.message), true); throw e; });
+  }
+
+  elEtapas.querySelectorAll('[data-so]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var etapa = b.getAttribute('data-so');
+      var corpo = params(etapa);
+      corpo.subprojeto = elSub.value;
+      post('/api/acoes/etapa/' + etapa, corpo, etapa).then(function (d) {
+        mostra(esc(etapa) + ' na fila (classe <b>' + esc(d.classe) + '</b>, job <code>' +
+          esc(d.job_id) + '</code>) &middot; <a href="/jobs">acompanhar</a>');
+      });
+    });
+  });
+
+  document.getElementById('btn-seq').addEventListener('click', function () {
+    var etapas = [];
+    var parametros = {};
+    elEtapas.querySelectorAll('.marca:checked').forEach(function (c) {
+      var e = c.getAttribute('data-etapa');
+      etapas.push(e);
+      parametros[e] = params(e);
+    });
+    if (!etapas.length) { mostra('marque ao menos uma etapa.', true); return; }
+    post('/api/acoes/sequencia',
+         { subprojeto: elSub.value, etapas: etapas, parametros: parametros },
+         'sequencia de ' + etapas.length + ' etapa(s)')
+      .then(function (d) {
+        var lista = d.jobs.map(function (j) { return esc(j.etapa); }).join(' &rarr; ');
+        mostra('esteira na fila: ' + lista + ' &middot; <a href="/jobs">acompanhar</a>');
+      });
+  });
+
+  document.getElementById('btn-marcar').addEventListener('click', function () {
+    elEtapas.querySelectorAll('.marca').forEach(function (c) { c.checked = true; });
+  });
+  document.getElementById('btn-limpar').addEventListener('click', function () {
+    elEtapas.querySelectorAll('.marca').forEach(function (c) { c.checked = false; });
+  });
+})();
+</script>
+{% endblock %}

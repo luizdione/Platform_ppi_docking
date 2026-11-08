@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block titulo %}Relatorio - painel PPI{% endblock %}
+{% block cabecalho %}Relatorio{% endblock %}
+{% block subtitulo %}Markdown, HTML e PDF das predicoes escolhidas{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <form method="get" action="/relatorio" class="acoes" style="align-items:center">
+    <label style="font-size:.84rem">Subprojeto
+      <select name="key" onchange="this.form.submit()"
+              style="background:var(--card);color:var(--fg);border:1px solid var(--line);
+                     border-radius:8px;padding:8px 12px;font-size:.86rem">
+        {% for s in subprojetos %}
+        <option value="{{ s.key }}" {% if s.key == key %}selected{% endif %}>{{ s.key }} - {{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  {% if erro %}<p class="lead" style="color:var(--am)">{{ erro }}</p>{% endif %}
+</section>
+
+<section>
+  <h2>Predicoes ({{ runs|length }})</h2>
+  {% if runs %}
+  <div class="acoes">
+    <button class="acao" id="marcar">Marcar todas</button>
+    <button class="acao" id="limpar">Desmarcar</button>
+  </div>
+  <div style="max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;padding:8px">
+    {% for r in runs %}
+    <label style="display:block;font-size:.8rem;padding:3px 0">
+      <input type="checkbox" class="run" value="{{ r.caminho }}"> {{ r.nome }}
+    </label>
+    {% endfor %}
+  </div>
+
+  <h2>Saida</h2>
+  <div class="acoes">
+    <label style="font-size:.84rem">Arquivo .md<br>
+      <input id="saida" placeholder="&lt;raiz-de-dados&gt;/&lt;campanha&gt;/relatorio.md"
+             style="width:420px;background:var(--card);color:var(--fg);border:1px solid var(--line);
+                    border-radius:8px;padding:8px 12px;font-family:Consolas,monospace;font-size:.82rem"></label>
+    <label style="font-size:.84rem">Projeto (titulo)<br>
+      <input id="projeto" placeholder="barnasea x barstares"
+             style="width:260px;background:var(--card);color:var(--fg);border:1px solid var(--line);
+                    border-radius:8px;padding:8px 12px;font-size:.82rem"></label>
+  </div>
+  <div class="acoes">
+    <label style="font-size:.84rem"><input type="checkbox" id="figuras" checked> gerar figuras</label>
+    <label style="font-size:.84rem"><input type="checkbox" id="html" checked> exportar HTML</label>
+    <label style="font-size:.84rem"><input type="checkbox" id="pdf"> exportar PDF</label>
+  </div>
+  <div class="acoes">
+    <button class="acao" id="gerar">Gerar relatorio</button>
+    <a class="acao" href="/jobs" style="text-decoration:none">Ver jobs</a>
+  </div>
+  <p class="mut" id="aviso" style="display:none"></p>
+  {% else %}
+  <p class="lead">Nenhuma predicao encontrada nas raizes deste subprojeto.</p>
+  {% endif %}
+</section>
+
+<script>
+(function () {
+  var aviso = document.getElementById('aviso');
+  var marcar = document.getElementById('marcar');
+  if (!marcar) { return; }
+
+  marcar.addEventListener('click', function () {
+    document.querySelectorAll('.run').forEach(function (c) { c.checked = true; });
+  });
+  document.getElementById('limpar').addEventListener('click', function () {
+    document.querySelectorAll('.run').forEach(function (c) { c.checked = false; });
+  });
+
+  document.getElementById('gerar').addEventListener('click', function () {
+    var runs = [];
+    document.querySelectorAll('.run:checked').forEach(function (c) { runs.push(c.value); });
+    aviso.style.display = 'block'; aviso.style.color = '';
+    if (!runs.length) { aviso.style.color = 'var(--am)'; aviso.textContent = 'marque ao menos uma predicao.'; return; }
+    aviso.textContent = 'enfileirando o relatorio...';
+    fetch('/api/acoes/relatorio', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        runs: runs,
+        saida: document.getElementById('saida').value.trim(),
+        projeto: document.getElementById('projeto').value.trim(),
+        figuras: document.getElementById('figuras').checked,
+        html: document.getElementById('html').checked,
+        pdf: document.getElementById('pdf').checked
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) { throw new Error(res.d.error || res.d.detail || 'falhou'); }
+        aviso.innerHTML = 'relatorio na fila (job <code>' + res.d.job_id +
+          '</code>) &middot; <a href="/jobs">acompanhar o log</a>';
+      })
+      .catch(function (e) { aviso.style.color = 'var(--am)'; aviso.textContent = 'falhou: ' + e.message; });
+  });
+})();
+</script>
+{% endblock %}

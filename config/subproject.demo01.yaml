@@ -1,0 +1,147 @@
+# -*- coding: utf-8 -*-
+# =====================================================================
+# subproject.demo01.yaml -- EXEMPLO PUBLICO de campanha (barnase x barstar)
+# ---------------------------------------------------------------------
+# ISTO E UM EXEMPLO, NAO UM RESULTADO. Nenhum dado acompanha este
+# repositorio: os caminhos abaixo apontam para uma arvore que VOCE monta no
+# seu disco, e os numeros em `hits:` sao ilustrativos.
+#
+# O par escolhido e o complexo barnase-barstar (PDB 1BRS), um dos complexos
+# proteina-proteina mais estudados da literatura e presente no Docking
+# Benchmark. Serve por tres razoes: e publico, a interface e bem descrita, e
+# existe estrutura experimental para usar como referencia independente.
+#
+# ONDE MORA O QUE (regra do repositorio):
+#   * codigo e config  -> este repositorio (git)
+#   * DADO (predicoes do Boltz-2, PDBs derivados, runs do HADDOCK3, MD)
+#     -> FORA do repositorio, sob a raiz da env PPI_DOCK_DATA_ROOT
+# Este arquivo guarda apenas PONTEIROS. Nenhum resultado entra no git.
+# =====================================================================
+
+version: 1
+
+id: DEMO01
+label: Barnase x barstar (exemplo)
+# Nome da CAMPANHA gravado em PairManifest.campaign. E o que a ponte aceita em
+# `subproject`, junto com o `id`: `chain_roles_for`/`funnel.scoring` resolvem os
+# dois, para o rotulo nao depender do `id`.
+campaign: DEMO01_barnase_barstar
+description: >-
+  Exemplo publico: barnase (RNase de Bacillus amyloliquefaciens) contra barstar
+  e um pequeno painel de mutantes de interface, sem cofatores. Pressupoe que as
+  predicoes do Boltz-2 JA foram rodadas -- o funil parte delas, nao as gera.
+
+# ---------------------------------------------------------------------
+# Caminhos. Troque <RAIZ> pela sua raiz de dados (PPI_DOCK_DATA_ROOT).
+# Podem ser absolutos; nao precisam existir para o funil ser importavel,
+# mas uma raiz declarada e inexistente erra alto em vez de devolver vazio.
+# ---------------------------------------------------------------------
+paths:
+  # Layout esperado (o do Boltz-2):
+  #   <results_root>/boltz_results_<label>/predictions/<label>/
+  #       <label>_model_0.cif
+  #       confidence_<label>_model_0.json
+  #       pae_<label>_model_0.npz
+  results_root: '<RAIZ>/demo01/resultados'
+
+  # Planilha de scores + pareceres. O funil LE daqui; nao escreve.
+  avaliacoes: '<RAIZ>/demo01/avaliacoes'
+
+  # Saida do HADDOCK3 (.cfg, ambig.tbl, run dirs, caprieval). Criada pelo
+  # primeiro `prepare()`.
+  haddock_out: '<RAIZ>/demo01/haddock'
+
+# ---------------------------------------------------------------------
+# Papeis das cadeias - LER ANTES DE CODAR
+# ---------------------------------------------------------------------
+# A convencao global do motor de pontuacao ("isca = cadeias iniciais,
+# PARCEIRO = ULTIMA cadeia") NAO pode ser aplicada cegamente: num complexo
+# real a ordem das cadeias no `.cif` pode nao seguir o nome do rotulo, e
+# cadeias de ligante/cofator costumam vir DEPOIS das proteinas -- aplicar
+# "ultima cadeia = parceiro" elegeria o cofator.
+#
+# Por isso os papeis sao DECLARADOS aqui, e nao inferidos. Neste exemplo a
+# ordem e a natural (A = isca, B = parceiro), mas os discriminantes de
+# tamanho ficam declarados de todo modo: e o que protege a campanha quando um
+# run sai com a ordem trocada.
+chain_roles:
+  # Receptor do HADDOCK = ISCA = barnase (110 residuos na numeracao de 1BRS).
+  receptor:
+    molecule: barnase
+    chain: A
+    n_residues_esperado: 110
+    discriminante: tamanho_e_nterm
+
+  # Ligand do HADDOCK = PARCEIRO = barstar (89 residuos).
+  ligand:
+    molecule: barstar
+    chain: B
+    n_residues_esperado: 89
+    discriminante: tamanho_e_nterm
+
+  # Cofatores: NAO sao parceiros. Entram aqui para serem ignorados na eleicao
+  # de cadeias e tratados a parte no preparo do HADDOCK. Barnase-barstar nao
+  # tem nenhum; a lista fica vazia de proposito, como modelo de preenchimento.
+  cofactors: []
+
+  # Salvaguarda obrigatoria: se a heuristica de tamanho nao separar as duas
+  # cadeias proteicas sem ambiguidade, ERRAR ALTO (nunca chutar pela ordem).
+  fail_if_ambiguous: true
+
+# ---------------------------------------------------------------------
+# Metricas: de onde ler
+# ---------------------------------------------------------------------
+scores:
+  # Planilha LONG, uma linha por par. Caminho relativo a `paths.avaliacoes`.
+  tsv: 'scores.tsv'
+  # ipTM a consumir: `protein_iptm` do JSON de confianca. NAO use o `iptm`
+  # global quando houver ligante/cofator na predicao -- ele os inclui e infla.
+  iptm_field: protein_iptm
+  # Celulas vazias / 'None' / 'nan' viram None -- NUNCA 0.0.
+  missing_is_none: true
+  # Colunas de IDENTIDADE do par (viram PairManifest.bait/partner).
+  # bait = ISCA = receptor do HADDOCK; partner = PARCEIRO = ligante.
+  # Nao inferir do nome do rotulo nem da ordem das cadeias do `.cif`.
+  bait_column: bait
+  partner_column: partner
+
+# ---------------------------------------------------------------------
+# Pares de exemplo (NUMEROS ILUSTRATIVOS, nao medidos)
+# ---------------------------------------------------------------------
+# O `label` e tambem o nome da pasta de run (prefixada por `boltz_results_`) e
+# do subdiretorio em `predictions/`. Esta lista nao e obrigatoria: ela serve
+# para documentar a campanha e para o funil ter o que conferir num ensaio seco.
+hits:
+  - label: barnase_x_barstar
+    bait: barnase
+    partner: barstar
+    ipsae: 0.62
+    iptm_pp: 0.81
+    cov_core: 0.97
+    face: nuclear (canonica)
+
+  - label: barnase_x_barstarD39A
+    bait: barnase
+    partner: barstarD39A
+    ipsae: 0.58
+    iptm_pp: 0.81
+    cov_core: 1.0
+    face: nuclear (canonica)
+
+# ---------------------------------------------------------------------
+# Notas operacionais (valem para qualquer campanha)
+# ---------------------------------------------------------------------
+notas:
+  - >-
+    CIF -> PDB: `Bio.PDB.PDBParser` le um arquivo .cif com ZERO atomos EM
+    SILENCIO. Use sempre MMCIFParser + PDBIO. Tambem nao parseie `_atom_site`
+    por posicao de coluna: a ordem dos campos varia entre arquivos.
+  - >-
+    Sem o binario haddock3 instalado, `prepare()` (logica pura: gera o .cfg e o
+    ambig.tbl) funciona; `run()` falha alto e claro, nunca produz resultado
+    plausivel e errado. No Windows, use a imagem de container
+    (`docker/Dockerfile.haddock3`).
+  - >-
+    A referencia do caprieval tem de ser o PDB do complexo gerado por
+    `funnel.split.reference_pdb`, nunca o .cif: o haddock3 le a referencia
+    fatiando colunas de PDB e nao tem parser de mmCIF.

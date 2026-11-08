@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block titulo %}PPI - painel{% endblock %}
+{% block cabecalho %}Plataforma PPI{% endblock %}
+{% block subtitulo %}painel local de analise e execucao &middot; localhost:8777{% endblock %}
+
+{% block conteudo %}
+<p class="lead">
+  Escolha um subprojeto para ver a triagem (indices, graficos, estrutura 3D) e
+  disparar as etapas do funil.
+</p>
+
+{% if subprojetos %}
+<div class="grid">
+  {% for s in subprojetos %}
+  <a class="card" href="/sub/{{ s.key }}">
+    <div class="tag">{{ s.key }}</div>
+    <h2>{{ s.name }}</h2>
+    <p>{{ s.notes or "campanha " ~ s.campaign }}</p>
+    <div class="meta">{{ s.n_roots }} raiz(es) de resultados</div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<section>
+  <h2>Nenhum subprojeto encontrado</h2>
+  <p class="lead">
+    A navegacao vem do <code>subprojetos.json</code> curado (por padrao
+    indicado pela env <code>PPI_SUBPROJECTS</code>)
+    somado aos <code>config/subproject.*.yaml</code> do repo. Confira se o arquivo existe
+    e esta legivel.
+  </p>
+</section>
+{% endif %}
+{% endblock %}

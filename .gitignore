@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------------
+# Platform_ppi_docking -- camada de orquestracao (codigo apenas).
+# O DADO (predicoes do Boltz-2, PDBs derivados, runs do HADDOCK3, MD) vive
+# FORA do repositorio, sob a raiz apontada por PPI_DOCK_DATA_ROOT.
+# Nada de dado, e nenhum resultado de pesquisa, entra aqui.
+# ---------------------------------------------------------------------
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Ambiente e credenciais (nunca versionar)
+.env
+.env.*
+*config_local*
+*.pem
+*.key
+
+# Saidas de execucao e estruturas (dado, nao codigo)
+outputs/
+runs/
+manifests/
+*.cif
+*.pdb
+*.pdbqt
+*.npz
+*.tbl
+*.dcd
+run-*/
+run-smoke*/
+
+# Editores / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Backups locais
+*.bak
+*.orig
+
+# Bibliotecas de terceiros baixadas para o painel (nao versionar: 3Dmol
+# ~530 KB e plotly ~4,7 MB). O painel as recria no primeiro arranque, a
+# partir do pacote python `plotly` e de um CDN publico (ver web/assets.py).
+web/static/3Dmol-min.js
+web/static/plotly.min.js
+
+# Dado de estrutura e de trajetoria, em qualquer lugar da arvore.
+*.cif.gz
+*.ent
+*.mmcif
+*.xtc
+*.trr
+*.h5
+*.npy
+jobs/
+resultados/
+results/
+_md_analysis/
+subprojetos.json

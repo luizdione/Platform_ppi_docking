@@ -1,0 +1,106 @@
+/* Complemento do painel local. O ppi.css (compartilhado com o viewer publicado)
+   NAO recebe regra especifica do dashboard: o que so existe aqui -- navegacao,
+   fila de jobs, log ao vivo -- mora neste arquivo. Mesma paleta (variaveis do
+   :root do ppi.css). */
+
+.navtop{ margin-left:auto; display:flex; gap:8px; flex-wrap:wrap; }
+.navtop a{
+  background:var(--card); border:1px solid var(--line); border-radius:8px;
+  padding:6px 14px; font-size:.84rem; text-decoration:none; color:var(--fg);
+}
+.navtop a:hover{ border-color:var(--cy); color:var(--cy); }
+.navtop a.ativo{ border-color:var(--cy); color:var(--cy); font-weight:700; }
+
+footer{
+  margin-top:48px; padding-top:14px; border-top:1px solid var(--line);
+  font-size:.78rem;
+}
+.mut{ color:var(--mut); }
+
+/* --- fila de jobs ------------------------------------------------------- */
+.job{
+  background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:12px 14px; margin:10px 0; display:flex; align-items:center; gap:12px;
+}
+.job .nome{ font-family:Consolas,monospace; font-size:.86rem; }
+.st{
+  font-size:.72rem; font-weight:700; padding:3px 10px; border-radius:20px;
+  text-transform:uppercase; letter-spacing:.03em;
+}
+.st-running{ background:#12305a; color:var(--cy); }
+.st-queued{ background:#20262e; color:var(--mut); }
+.st-done{ background:#12351f; color:var(--gr); }
+.st-error{ background:#3a1416; color:#ff7b72; }
+.st-unknown{ background:#3a2f12; color:var(--am); }
+
+/* --- log ao vivo (SSE) --------------------------------------------------- */
+.log{
+  background:#070f1c; border:1px solid var(--line); border-radius:8px;
+  padding:12px 14px; font-family:Consolas,monospace; font-size:.78rem;
+  line-height:1.45; white-space:pre-wrap; word-break:break-word;
+  max-height:420px; overflow-y:auto; color:#cfe3f5;
+}
+
+/* --- barra de recursos (RAM/GPU) ---------------------------------------- */
+.recursos{ display:flex; gap:18px; flex-wrap:wrap; margin:14px 0; }
+.rec{
+  background:var(--card); border:1px solid var(--line); border-radius:10px;
+  padding:10px 16px; font-size:.82rem;
+}
+.rec b{ color:var(--cy); }
+.rec.alerta{ border-color:var(--am); }
+.rec.alerta b{ color:var(--am); }
+
+/* --- botoes de acao ------------------------------------------------------ */
+.acoes{ display:flex; gap:10px; flex-wrap:wrap; margin:16px 0; }
+button.acao{
+  background:var(--card); color:var(--fg); border:1px solid var(--line);
+  border-radius:8px; padding:9px 18px; cursor:pointer; font-size:.86rem;
+}
+button.acao:hover:not(:disabled){ border-color:var(--cy); color:var(--cy); }
+button.acao:disabled{ opacity:.45; cursor:not-allowed; }
+button.acao.perigo:hover:not(:disabled){ border-color:var(--am); color:var(--am); }
+
+/* --- tabela de indices (no viewer publicado a tabela e imagem; aqui e HTML,
+   para dar para ordenar/copiar e crescer com a fila de execucao) ---------- */
+table.tab{ border-collapse:collapse; width:100%; font-size:.82rem; }
+table.tab th, table.tab td{
+  text-align:right; padding:6px 10px; border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+table.tab th:first-child, table.tab td:first-child,
+table.tab th:nth-child(2), table.tab td:nth-child(2){ text-align:left; }
+table.tab th{ color:var(--cy); font-weight:600; position:sticky; top:0; background:var(--bg); }
+table.tab tbody tr:hover{ background:#0f2038; }
+tr.linha-erro td{ color:var(--am); }
+
+/* badges de classe: mesma convencao do viewer (verde/ambar/cinza) */
+.badge{ font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:20px; }
+.b-HIT{ background:#12351f; color:var(--gr); }
+.b-MAYBE{ background:#3a2f12; color:var(--am); }
+.b-weak{ background:#20262e; color:var(--mut); }
+/* falha de verificacao no autoteste: mais alto que "weak" (cinza = par fraco,
+   nao e defeito) e que "MAYBE" (ambar = ferramenta ausente, pode ser normal). */
+.b-falha{ background:#3d1a1a; color:#ff7b72; }
+
+/* graficos: mesmo grid do viewer */
+.charts{ display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px; }
+.charts figure.chart{ margin:0; background:var(--card); border:1px solid var(--line);
+  border-radius:10px; padding:8px; }
+
+/* --- documento renderizado da Ajuda (markdown -> html) ------------------- */
+.doc h1, .doc h2, .doc h3 { color:var(--cy); margin:22px 0 8px; }
+.doc h1 { font-size:1.25rem; } .doc h2 { font-size:1.08rem; border-left:3px solid var(--cy); padding-left:10px; }
+.doc h3 { font-size:.96rem; }
+.doc p, .doc li { line-height:1.65; font-size:.9rem; }
+.doc ul, .doc ol { padding-left:22px; }
+.doc code { font-family:Consolas,monospace; background:#0a1830; border:1px solid var(--line);
+  border-radius:4px; padding:1px 5px; font-size:.84em; }
+.doc pre { background:#070f1c; border:1px solid var(--line); border-radius:8px;
+  padding:12px 14px; overflow-x:auto; }
+.doc pre code { background:none; border:none; padding:0; }
+.doc table { border-collapse:collapse; width:100%; font-size:.85rem; margin:12px 0; display:block; overflow-x:auto; }
+.doc th, .doc td { text-align:left; padding:6px 10px; border-bottom:1px solid var(--line); }
+.doc th { color:var(--cy); }
+.doc blockquote { border-left:3px solid var(--am); margin:12px 0; padding:2px 14px; color:var(--mut); }
+.doc a { color:var(--cy); }

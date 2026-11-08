@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block titulo %}Diagnostico - painel PPI{% endblock %}
+{% block cabecalho %}Diagnostico{% endblock %}
+{% block subtitulo %}o ambiente esta pronto para rodar?{% endblock %}
+
+{% block conteudo %}
+
+<section>
+  <h2>Autoteste</h2>
+  <p class="lead">
+    As tabelas abaixo dizem o que esta <b>instalado</b>. O autoteste responde a
+    pergunta que importa antes de gastar horas de GPU: <b>as pecas funcionam e
+    conversam entre si?</b> Ele executa de verdade - <code>--help</code> de cada
+    acao do painel, ida e volta em cada formato de arquivo (YAML, JSON de
+    confianca, TSV, CIF, manifesto), o ciclo de vida de um job de mentira e os
+    motores externos (GPU, HADDOCK3, pacote do viewer).
+  </p>
+
+  <div class="acoes">
+    <button class="acao" id="btn-autoteste">Rodar autoteste</button>
+    <span class="mut" id="autoteste-status" style="font-size:.85rem">
+      {%- if autoteste.rodando %}rodando ha {{ autoteste.desde_s }}s...
+      {%- elif autoteste.resultado and autoteste.resultado.quando %}ultima rodada: {{ autoteste.resultado.quando }}
+      {%- else %}nunca rodou nesta maquina{% endif %}
+    </span>
+  </div>
+  <p class="mut" style="font-size:.8rem">
+    Leva algumas dezenas de segundos (sobe subprocessos em dois envs conda) e
+    nao ocupa GPU nem Docker - pode rodar com job pesado em andamento.
+  </p>
+
+  {% set r = autoteste.resultado %}
+  {% if r %}
+    {% if r.erro %}
+      <p class="lead" style="color:var(--am)">O autoteste em si falhou: {{ r.erro }}</p>
+    {% else %}
+    <div class="recursos">
+      <div class="rec {% if r.falhou %}alerta{% endif %}">
+        passaram <b>{{ r.passou }}</b> de {{ r.total }}
+      </div>
+      {% if r.falhou %}
+      <div class="rec alerta">falharam <b>{{ r.falhou }}</b></div>
+      {% endif %}
+      <div class="rec">levou <b>{{ r.segundos }}s</b></div>
+      <div class="rec">em <b>{{ r.quando }}</b></div>
+    </div>
+
+    {% for b in r.blocos %}
+    <h3 style="margin:1.1rem 0 .3rem">{{ b.titulo }} <span class="mut" style="font-weight:400;font-size:.82rem">{{ b.ok }}/{{ b.total }}</span></h3>
+    <table class="tab" style="max-width:860px">
+      <thead><tr><th>Verificacao</th><th>Resultado</th><th>ms</th><th>Estado</th></tr></thead>
+      <tbody>
+      {% for i in b.itens %}
+        <tr>
+          <td style="text-align:left">{{ i.nome }}</td>
+          <td style="text-align:left"><span class="mut" style="font-size:.78rem">{{ i.detalhe or i.erro }}</span></td>
+          <td>{{ i.ms }}</td>
+          <td>{% if i.ok %}<span class="badge b-HIT">ok</span>{% else %}<span class="badge b-falha">falhou</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endfor %}
+    {% endif %}
+  {% endif %}
+</section>
+
+<script>
+(function () {
+  var btn = document.getElementById('btn-autoteste');
+  var status = document.getElementById('autoteste-status');
+  var timer = null;
+
+  function ocupado(sim) {
+    btn.disabled = sim;
+    btn.textContent = sim ? 'rodando...' : 'Rodar autoteste';
+  }
+
+  // Enquanto roda, a pagina so pergunta o estado; quando termina, recarrega para
+  // deixar o Jinja desenhar o resultado (mesmo HTML da rodada anterior, sem
+  // duplicar a renderizacao aqui em JS).
+  function acompanha() {
+    fetch('/api/autoteste')
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.rodando) {
+          status.textContent = 'rodando ha ' + d.desde_s + 's...';
+          return;
+        }
+        clearInterval(timer);
+        timer = null;
+        status.textContent = 'concluido - recarregando...';
+        window.location.reload();
+      })
+      .catch(function (e) {
+        clearInterval(timer);
+        timer = null;
+        ocupado(false);
+        status.style.color = 'var(--am)';
+        status.textContent = 'perdi contato com o painel: ' + e.message;
+      });
+  }
+
+  function vigia() {
+    ocupado(true);
+    if (timer === null) { timer = setInterval(acompanha, 2000); }
+  }
+
+  btn.addEventListener('click', function () {
+    status.style.color = '';
+    status.textContent = 'disparando...';
+    ocupado(true);
+    fetch('/api/autoteste', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { vigia(); })
+      .catch(function (e) {
+        ocupado(false);
+        status.style.color = 'var(--am)';
+        status.textContent = 'nao consegui disparar: ' + e.message;
+      });
+  });
+
+  {% if autoteste.rodando %}vigia();{% endif %}
+})();
+</script>
+
+{% if not ponte.ok %}
+<section>
+  <h2>Motor indisponivel</h2>
+  <p class="lead">{{ ponte.erro }}</p>
+</section>
+{% elif erro %}
+<section><h2>Falha ao diagnosticar</h2><p class="lead">{{ erro }}</p></section>
+{% else %}
+
+<section>
+  <h2>Situacao geral</h2>
+  <div class="recursos">
+    <div class="rec {% if saude.overall != 'ok' %}alerta{% endif %}">
+      estado <b>{{ saude.overall }}</b>
+    </div>
+    {% if saude.gpu %}
+    <div class="rec {% if not saude.gpu.ok %}alerta{% endif %}">
+      GPU <b>{{ 'sim' if saude.gpu.ok else 'nao' }}</b> &middot; {{ saude.gpu.desc }}
+    </div>
+    {% endif %}
+    {% if saude.system %}
+    <div class="rec">Python <b>{{ saude.system.python }}</b></div>
+    {% endif %}
+    {% if recursos.ram.fracao is not none %}
+    <div class="rec {% if recursos.ram.fracao < 0.2 %}alerta{% endif %}">
+      RAM livre <b>{{ recursos.ram.livre_gb }} GB</b> de {{ recursos.ram.total_gb }} GB
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section>
+  <h2>Dependencias</h2>
+  <table class="tab" style="max-width:640px">
+    <thead><tr><th>Pacote</th><th>Versao</th><th>Essencial</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for d in saude.deps %}
+      <tr>
+        <td>{{ d.name }}</td>
+        <td>{{ d.version or "-" }}</td>
+        <td>{{ "sim" if d.core else "nao" }}</td>
+        <td>{% if d.ok %}<span class="badge b-HIT">ok</span>{% else %}<span class="badge b-MAYBE">ausente</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Ferramentas externas</h2>
+  <table class="tab" style="max-width:760px">
+    <thead><tr><th>Ferramenta</th><th>Para que serve</th><th>Caminho</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for t in saude.tools %}
+      <tr>
+        <td>{{ t.name }}</td>
+        <td style="text-align:left">{{ t.purpose }}</td>
+        <td style="text-align:left"><span class="mut" style="font-size:.76rem">{{ t.path or "-" }}</span></td>
+        <td>{% if t.ok %}<span class="badge b-HIT">ok</span>{% else %}<span class="badge b-MAYBE">ausente</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="mut" style="font-size:.8rem">
+    Ferramenta ausente nao e necessariamente problema: o <code>boltz</code> vive
+    no ambiente com GPU (a predicao roda la, nao aqui), e o HADDOCK3 roda em
+    container. O painel avisa na hora de disparar se faltar o que a etapa precisa.
+  </p>
+</section>
+
+<section>
+  <h2>Pastas</h2>
+  <table class="tab" style="max-width:760px">
+    <thead><tr><th>Papel</th><th>Caminho</th><th>Existe</th><th>Gravavel</th></tr></thead>
+    <tbody>
+    {% for p in saude.paths %}
+      <tr>
+        <td>{{ p.label }}</td>
+        <td style="text-align:left"><span class="mut" style="font-size:.78rem">{{ p.path }}</span></td>
+        <td>{% if p.exists %}<span class="badge b-HIT">sim</span>{% else %}<span class="badge b-MAYBE">nao</span>{% endif %}</td>
+        <td>{% if p.writable %}<span class="badge b-HIT">sim</span>{% else %}<span class="badge b-MAYBE">nao</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

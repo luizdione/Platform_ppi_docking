@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block titulo %}{{ codigo }} - painel PPI{% endblock %}
+{% block cabecalho %}Erro {{ codigo }}{% endblock %}
+{% block subtitulo %}{{ titulo }}{% endblock %}
+
+{% block conteudo %}
+<section>
+  <h2>{{ titulo }}</h2>
+  <p class="lead">{{ mensagem }}</p>
+  {% if detalhe %}
+  <div class="log" style="max-height:220px">{{ detalhe }}</div>
+  {% endif %}
+  <div class="acoes">
+    <a class="acao" href="/" style="text-decoration:none">&larr; Painel</a>
+    <a class="acao" href="/jobs" style="text-decoration:none">Jobs</a>
+  </div>
+</section>
+{% endblock %}

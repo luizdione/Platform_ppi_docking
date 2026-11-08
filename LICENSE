@@ -1,0 +1,101 @@
+LICENÇA DE USO — Platform_ppi_docking
+Versão 1.0, novembro de 2026
+
+Copyright (c) 2026 Luiz Dione Barbosa De-Melo (De-Melo, L.D.B.)
+Instituto Federal de Educação, Ciência e Tecnologia do Rio de Janeiro (IFRJ), Brasil
+ORCID 0000-0003-2445-9943 · luiz.melo@ifrj.edu.br
+https://github.com/luizdione/Platform_ppi_docking
+
+RESUMO (não substitui o texto abaixo)
+  • Uso pessoal e uso em ensino: livres, sem pedir nada.
+  • Uso em pesquisa: permitido mediante AUTORIZAÇÃO PRÉVIA do autor, por e-mail.
+  • Uso comercial: proibido.
+  • Redistribuir cópias, modificar ou criar obras derivadas: proibido.
+
+SUMMARY IN ENGLISH (the Portuguese text below prevails)
+  • Personal use and use in teaching: free of charge, no permission needed.
+  • Use in research: allowed only with the author's PRIOR WRITTEN AUTHORIZATION, by e-mail.
+  • Commercial use: not allowed.
+  • Redistribution, modification and derivative works: not allowed.
+
+1. DEFINIÇÕES
+1.1. "Programa" é o Platform_ppi_docking: o código-fonte deste repositório, os pacotes e imagens de
+     contêiner publicados pelo autor, a documentação e os arquivos de configuração que os
+     acompanham.
+1.2. "Autor" é Luiz Dione Barbosa De-Melo, titular dos direitos sobre o Programa.
+1.3. "Uso pessoal" é o uso por uma pessoa física, em seus próprios equipamentos, sem fim
+     econômico e sem prestar serviço a terceiros.
+1.4. "Uso em ensino" é o uso em atividades de ensino e aprendizagem — aulas, disciplinas,
+     treinamentos, oficinas e demonstrações — por instituições de ensino e por seus
+     estudantes e docentes, incluindo o uso por estudante em trabalho de disciplina.
+1.5. "Uso em pesquisa" é o uso que gere, trate ou analise dados destinados a investigação
+     científica, inclusive em dissertação, tese, relatório de pesquisa, pedido de
+     financiamento, pré-print, artigo, resumo, pôster, apresentação em evento ou patente.
+1.6. "Uso comercial" é o uso que vise, direta ou indiretamente, vantagem econômica, tal
+     como prestação de serviço remunerado, consultoria, análise para cliente, venda,
+     aluguel, sublicenciamento, oferta como serviço (SaaS) e uso em atividade empresarial.
+
+2. USOS LIVRES
+2.1. O Autor concede licença não exclusiva, gratuita, mundial, intransferível e revogável
+     para baixar, instalar, executar e consultar o Programa em Uso pessoal e em Uso em
+     ensino, mantidos os avisos de autoria e esta licença.
+2.2. Esses usos não exigem comunicação prévia ao Autor.
+
+3. USO EM PESQUISA — DEPENDE DE AUTORIZAÇÃO PRÉVIA
+3.1. O Uso em pesquisa só é permitido após AUTORIZAÇÃO PRÉVIA E EXPRESSA do Autor,
+     solicitada por e-mail a luiz.melo@ifrj.edu.br.
+3.2. O pedido deve informar: quem usará o Programa, a instituição, o objetivo da pesquisa e
+     o destino pretendido dos resultados.
+3.3. A autorização é pessoal, limitada ao projeto descrito no pedido, e não se estende a
+     outros projetos, grupos ou instituições. O Autor pode concedê-la, negá-la ou
+     condicioná-la, inclusive a formas de reconhecimento de autoria, e pode revogá-la por
+     descumprimento desta licença.
+3.4. Executar o Programa apenas para conhecê-lo ou avaliá-lo, sem gerar dado ou resultado
+     de pesquisa, é Uso pessoal e não exige autorização.
+
+4. USO COMERCIAL
+4.1. O Uso comercial é proibido sob esta licença, em qualquer hipótese.
+4.2. Interessados devem procurar o Autor para negociar licença específica.
+
+5. LIMITES GERAIS
+5.1. É vedado, sem autorização escrita do Autor: distribuir cópias do Programa, no todo ou
+     em parte; publicá-lo em outro repositório, registro ou loja de aplicativos; modificar,
+     adaptar, traduzir ou criar obra derivada; fazer engenharia reversa, salvo no que a lei
+     expressamente permitir; remover ou alterar avisos de autoria, de licença ou de
+     procedência.
+5.2. Instalar, configurar e executar o Programa no próprio ambiente, conforme a
+     documentação, não é modificação.
+5.3. Esta licença não cede a propriedade do Programa nem direitos de marca.
+
+6. CITAÇÃO
+6.1. Em qualquer trabalho que resulte de Uso em pesquisa autorizado, o Programa deve ser
+     citado conforme o arquivo CITATION.cff deste repositório, com nome, versão e URL.
+
+7. DADOS E RESULTADOS DO USUÁRIO
+7.1. O Programa é executado no ambiente do usuário. Os dados de entrada e os resultados
+     produzidos pertencem a quem os gerou, e o Autor não os coleta nem os acessa.
+
+8. COMPONENTES DE TERCEIROS
+8.1. O Programa depende de, e pode incluir, componentes de terceiros, cada um sob a própria
+     licença, que prevalece sobre esta quanto a esses componentes. As atribuições estão em
+     THIRD_PARTY_NOTICES.md, quando houver, e nos próprios arquivos.
+
+9. GARANTIAS E RESPONSABILIDADE
+9.1. O PROGRAMA É FORNECIDO "COMO ESTÁ", SEM GARANTIA DE QUALQUER NATUREZA, EXPRESSA OU
+     IMPLÍCITA, INCLUÍDAS AS DE ADEQUAÇÃO A UM FIM ESPECÍFICO, DE EXATIDÃO DOS RESULTADOS E
+     DE NÃO VIOLAÇÃO DE DIREITOS.
+9.2. O Programa é ferramenta de apoio à pesquisa. A interpretação dos resultados e qualquer
+     decisão tomada a partir deles são de responsabilidade do usuário.
+9.3. NA MÁXIMA EXTENSÃO PERMITIDA EM LEI, O AUTOR NÃO RESPONDE POR DANOS DIRETOS,
+     INDIRETOS, INCIDENTAIS OU LUCROS CESSANTES DECORRENTES DO USO OU DA IMPOSSIBILIDADE DE
+     USO DO PROGRAMA.
+
+10. VIGÊNCIA
+10.1. Esta licença vigora enquanto o usuário a cumprir. O descumprimento a extingue de
+      pleno direito, e o usuário deve cessar o uso e apagar as cópias que detiver.
+
+11. LEI APLICÁVEL
+11.1. O Programa é protegido pela Lei n. 9.609/98 e pela Lei n. 9.610/98. Aplica-se a lei
+      brasileira, e fica eleito o foro da Comarca do Rio de Janeiro, RJ, Brasil.
+
+Contato para autorizações e para uso comercial: luiz.melo@ifrj.edu.br

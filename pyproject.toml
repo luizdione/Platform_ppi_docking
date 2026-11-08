@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ppi_docking"
+version = "0.1.0"
+description = "Confidence funnel that chains Boltz-2 -> scoring -> gate -> HADDOCK3 -> gate -> MD-ready pair"
+readme = "README.md"
+requires-python = ">=3.11"
+# Licenca propria (nao OSI): uso pessoal e de ensino livres, uso comercial
+# proibido, uso em pesquisa somente com autorizacao previa do autor por
+# e-mail. O texto completo esta em LICENSE.
+license = { file = "LICENSE" }
+authors = [
+    { name = "Luiz Dione Barbosa De-Melo", email = "luiz.melo@ifrj.edu.br" },
+]
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "jinja2",
+    "pyyaml",
+    "biopython",
+    "numpy",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+# Figuras do painel (Plotly) e viewer 3D embutido (py3Dmol). Opcionais: o
+# funil (score -> gate -> HADDOCK3) roda sem eles; so as paginas de figura
+# e de estrutura os pedem.
+viz = ["plotly", "py3Dmol", "pandas"]
+
+# `engines.haddock3` (o motor de docking) NAO e dependencia declarada: ele vive
+# no repositorio proprio Platform_docking_suite e e resolvido por sys.path /
+# instalacao editable, via a env DOCKING_SUITE_HOME. Nunca duplicar codigo dele.
+# O motor de PONTUACAO, ao contrario, esta vendorizado aqui em `scoring_engine`
+# (ver README, secao 'Vendored scoring engine').
+
+[tool.setuptools]
+# `web.api` e subpacote e precisa ser declarado: sem ele o wheel sai sem a
+# API de jobs e o painel nao sobe.
+packages = [
+    "funnel",
+    "bridge",
+    "config",
+    "core",
+    "scoring_engine",
+    "web",
+    "web.api",
+]
+
+# Arquivos que NAO sao .py e sem os quais o pacote instalado nao funciona:
+# os YAML de limiares e de campanha (lidos de CONFIG_DIR) e os templates e
+# assets do painel.
+[tool.setuptools.package-data]
+config = ["*.yaml"]
+web = ["templates/*.html", "static/*.css", "static/*.js"]
+
+# As duas bibliotecas de terceiros que o painel baixa sozinho no primeiro
+# arranque (3Dmol ~530 KB, plotly ~4,7 MB). Ficam fora do git e fora do
+# pacote; se estiverem na arvore de build, o glob acima as pegaria.
+[tool.setuptools.exclude-package-data]
+web = ["static/3Dmol-min.js", "static/plotly.min.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
