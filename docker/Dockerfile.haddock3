@@ -49,7 +49,8 @@ LABEL org.opencontainers.image.title="ppi-haddock3" \
       org.opencontainers.image.documentation="https://github.com/luizdione/Platform_ppi_docking#haddock3" \
       org.opencontainers.image.authors="Luiz Dione Barbosa De-Melo <luiz.melo@ifrj.edu.br>" \
       org.opencontainers.image.vendor="Instituto Federal de Educacao, Ciencia e Tecnologia do Rio de Janeiro (IFRJ)" \
-      org.opencontainers.image.version="0.1.0"
+      org.opencontainers.image.version="0.1.0" \
+      org.opencontainers.image.revision="55f887aca74c90f17f459d474edca678ad079f55"
 
 # tcsh: os scripts do CNS sao csh. gfortran/build-essential: recompilar o CNS
 # caso o executavel que vem com o pip nao case com as libs desta imagem.
