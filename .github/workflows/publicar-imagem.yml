@@ -1,0 +1,165 @@
+# ---------------------------------------------------------------------------
+# Constroi e publica a imagem do HADDOCK3 no GHCR.
+#
+# POR QUE EXISTE
+#   1. Publicar daqui usa o GITHUB_TOKEN da propria Action: nao depende de
+#      token pessoal na maquina de ninguem, nem de `gh auth refresh`.
+#   2. Quando a imagem e enviada por uma Action DESTE repositorio, o GitHub liga
+#      o pacote ao repositorio sozinho. Enviada da maquina do autor, o pacote
+#      fica solto na conta mesmo com o label `org.opencontainers.image.source`.
+#   3. O build acontece nos runners, nao no computador de quem programa.
+#
+# QUANDO RODA
+#   A imagem depende SO do Dockerfile (ela nao copia nada do repositorio), entao
+#   nao faz sentido reconstruir a cada commit: roda quando o Dockerfile ou este
+#   arquivo mudam, quando uma release e publicada, e a mao pelo botao
+#   "Run workflow".
+# ---------------------------------------------------------------------------
+name: Publicar imagem do HADDOCK3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker/Dockerfile.haddock3"
+      - ".github/workflows/publicar-imagem.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      versao:
+        description: "Tag de versao (vazio = le do LABEL image.version do Dockerfile)"
+        required: false
+        type: string
+
+# Menor permissao que faz o trabalho: ler o codigo e escrever pacote.
+permissions:
+  contents: read
+  packages: write
+
+# Dois pushes seguidos nao disputam a mesma tag.
+concurrency:
+  group: imagem-haddock3-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGEM: ghcr.io/${{ github.repository_owner }}/ppi-haddock3
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+
+      - name: Resolver a versao
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          entrada="${{ inputs.versao }}"
+          if [ -n "$entrada" ]; then
+            versao="$entrada"
+            origem="entrada do workflow_dispatch"
+          elif [ "${{ github.event_name }}" = "release" ]; then
+            versao="${GITHUB_REF_NAME#v}"
+            origem="tag da release"
+          else
+            # Fonte unica: o proprio LABEL do Dockerfile.
+            versao="$(sed -n 's/.*org\.opencontainers\.image\.version="\([^"]*\)".*/\1/p' \
+                      docker/Dockerfile.haddock3 | head -1)"
+            origem="LABEL image.version do Dockerfile"
+          fi
+          if [ -z "$versao" ]; then
+            echo "::error::nao consegui resolver a versao da imagem"
+            exit 1
+          fi
+          echo "versao=$versao" >> "$GITHUB_OUTPUT"
+          echo "Versao: $versao (de: $origem)"
+
+      - name: Configurar Buildx
+        uses: docker/setup-buildx-action@v3.7.1
+
+      # Uma arquitetura so, de proposito: o Dockerfile confere em build time que
+      # o binario do CNS da arquitetura EXECUTA, e cruzar para arm64 por emulacao
+      # levaria dezenas de minutos para um usuario que nao existe hoje.
+      - name: Construir (sem publicar ainda)
+        uses: docker/build-push-action@v6.9.0
+        with:
+          context: .
+          file: docker/Dockerfile.haddock3
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: ${{ env.IMAGEM }}:${{ steps.ver.outputs.versao }}
+          # O SHA real do commit que gerou a imagem. Nao fica no Dockerfile
+          # porque la ele envelheceria no commit seguinte.
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.created=${{ github.event.repository.updated_at }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # A regra do repositorio e que a imagem nao carrega arquivo do projeto nem
+      # dado: o Dockerfile nao tem COPY nem ADD. Aqui isso deixa de ser promessa
+      # e vira teste -- se algum dia alguem acrescentar um COPY, o build para.
+      - name: Conferir que a imagem nao carrega arquivo do repositorio
+        shell: bash
+        run: |
+          set -euo pipefail
+          cid="$(docker create ${{ env.IMAGEM }}:${{ steps.ver.outputs.versao }})"
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          docker export "$cid" | python3 - <<'PY'
+          import sys, tarfile
+          SISTEMA = ("usr/", "lib/", "lib64/", "bin/", "sbin/", "etc/", "var/",
+                     "opt/", "srv/", "root/", "home/", "tmp/", "proc/", "sys/",
+                     "dev/", "run/", "media/", "mnt/", "boot/")
+          # O Docker cria este arquivo vazio sozinho em toda imagem.
+          PERMITIDOS = {".dockerenv"}
+          intrusos, total = [], 0
+          with tarfile.open(fileobj=sys.stdin.buffer, mode="r|*") as tf:
+              for m in tf:
+                  total += 1
+                  if not m.isfile():
+                      continue
+                  # CUIDADO: `lstrip("./")` remove CARACTERES, nao prefixo --
+                  # transformaria ".dockerenv" em "dockerenv" e a lista de
+                  # permitidos nunca casaria.
+                  nome = m.name[2:] if m.name.startswith("./") else m.name
+                  if nome.startswith(SISTEMA) or nome in PERMITIDOS:
+                      continue
+                  intrusos.append((nome, m.size))
+          print(f"membros no tar: {total}")
+          if intrusos:
+              print("::error::a imagem carrega arquivo que nao e da imagem base:")
+              for nome, tam in intrusos[:40]:
+                  print(f"  {tam:>10}  {nome}")
+              sys.exit(1)
+          print("ok: nenhum arquivo do repositorio dentro da imagem")
+          PY
+
+      - name: Entrar no GHCR
+        uses: docker/login-action@v3.3.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publicar
+        shell: bash
+        run: |
+          set -euo pipefail
+          versao="${{ steps.ver.outputs.versao }}"
+          docker tag "${{ env.IMAGEM }}:$versao" "${{ env.IMAGEM }}:latest"
+          docker push "${{ env.IMAGEM }}:$versao"
+          docker push "${{ env.IMAGEM }}:latest"
+          {
+            echo "### Imagem publicada"
+            echo
+            echo '```'
+            echo "docker pull ${{ env.IMAGEM }}:$versao"
+            echo "docker pull ${{ env.IMAGEM }}:latest"
+            echo '```'
+            echo
+            echo "Commit: \`${{ github.sha }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

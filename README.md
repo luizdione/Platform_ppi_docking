@@ -295,6 +295,13 @@ Or build it yourself from the recipe in this repository:
 docker build -f docker/Dockerfile.haddock3 -t ppi-haddock3:latest .
 ```
 
+The published image is built and pushed by
+[`.github/workflows/publicar-imagem.yml`](.github/workflows/publicar-imagem.yml),
+which runs when `docker/Dockerfile.haddock3` changes, when a release is
+published, or on demand. Before pushing, that workflow **exports the built image
+and fails if it contains any file that is not part of the base image** — the
+claim below is enforced, not just asserted.
+
 The image is a plain `python:3.11-slim` with `haddock3` installed from PyPI,
 `WORKDIR /work` and `haddock3` as its entrypoint. It carries **no file from this
 repository and no data**: the `Dockerfile` has no `COPY` and no `ADD` at all —

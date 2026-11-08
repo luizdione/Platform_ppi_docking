@@ -37,6 +37,11 @@ FROM python:3.11-slim
 # Metadados OCI. O `image.source` e o que liga o pacote publicado ao
 # repositorio no GitHub (sem ele, o pacote aparece solto na conta).
 #
+# `image.revision` NAO fica aqui: carimbar o SHA num arquivo versionado e
+# auto-derrotante, porque ele fica errado no commit seguinte. Quem o preenche
+# e o build -- ver `.github/workflows/publicar-imagem.yml`. Num build local
+# ele simplesmente nao existe.
+#
 # NAO declaramos `image.licenses`: o CONTEUDO desta imagem e software de
 # TERCEIROS -- Debian, Python e haddock3/CNS, cada um sob a propria licenca.
 # A licenca deste repositorio cobre a RECEITA (este Dockerfile e o codigo do
@@ -49,8 +54,7 @@ LABEL org.opencontainers.image.title="ppi-haddock3" \
       org.opencontainers.image.documentation="https://github.com/luizdione/Platform_ppi_docking#haddock3" \
       org.opencontainers.image.authors="Luiz Dione Barbosa De-Melo <luiz.melo@ifrj.edu.br>" \
       org.opencontainers.image.vendor="Instituto Federal de Educacao, Ciencia e Tecnologia do Rio de Janeiro (IFRJ)" \
-      org.opencontainers.image.version="0.1.0" \
-      org.opencontainers.image.revision="55f887aca74c90f17f459d474edca678ad079f55"
+      org.opencontainers.image.version="0.1.0"
 
 # tcsh: os scripts do CNS sao csh. gfortran/build-essential: recompilar o CNS
 # caso o executavel que vem com o pip nao case com as libs desta imagem.
