@@ -168,9 +168,11 @@ is what brings the test dependencies, so install it first:
 pip install -e ".[dev]" && pytest
 ```
 
-197 tests should pass; a handful skip, and each one says why (no HADDOCK3
-binary, no container image, no `[viz]` extra, no data root declared). A skip is
-never a silent pass.
+From a bare clone that is what you get: **174 passed, 32 skipped, 0 failed.**
+Every skip states its reason — no `[viz]` extra, no HADDOCK3 binary, no
+container image, no engines repository, no data root declared. A skip is never a
+silent pass. Add `[viz]`, the docking engines repository and a data root and the
+skipped ones start running too.
 
 Start the panel (default <http://localhost:8777>; the API mounts under `/api`):
 
