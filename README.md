@@ -159,14 +159,18 @@ Optional extras:
 
 ```bash
 pip install -e ".[viz]"   # Plotly figures and the embedded 3D viewer
-pip install -e ".[dev]"   # pytest
 ```
 
-Run the test suite — it needs no data and no GPU:
+Run the test suite — it needs no data, no GPU and no network. The `[dev]` extra
+is what brings the test dependencies, so install it first:
 
 ```bash
-pytest
+pip install -e ".[dev]" && pytest
 ```
+
+197 tests should pass; a handful skip, and each one says why (no HADDOCK3
+binary, no container image, no `[viz]` extra, no data root declared). A skip is
+never a silent pass.
 
 Start the panel (default <http://localhost:8777>; the API mounts under `/api`):
 

@@ -25,7 +25,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+# httpx NAO e opcional para os testes: o `fastapi.testclient` (que vem do
+# `starlette.testclient`) o exige, e sem ele dois arquivos de teste nem sao
+# coletados -- "RuntimeError: The starlette.testclient module requires httpx".
+# Numa maquina de desenvolvimento ele costuma estar instalado por outra via, o
+# que esconde a falta; num ambiente limpo, nao.
+dev = ["pytest", "httpx"]
 # Figuras do painel (Plotly) e viewer 3D embutido (py3Dmol). Opcionais: o
 # funil (score -> gate -> HADDOCK3) roda sem eles; so as paginas de figura
 # e de estrutura os pedem.
