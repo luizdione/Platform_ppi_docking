@@ -109,7 +109,13 @@ jobs:
           set -euo pipefail
           cid="$(docker create ${{ env.IMAGEM }}:${{ steps.ver.outputs.versao }})"
           trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
-          docker export "$cid" | python3 - <<'PY'
+
+          # O script vai para um ARQUIVO, e so depois o tar e canalizado para ele.
+          # `docker export ... | python3 - <<'PY'` NAO funciona: o heredoc
+          # substitui o stdin, entao o Python le o PROGRAMA do heredoc e o
+          # `sys.stdin.buffer` dele e o heredoc ja consumido -- o tar nunca
+          # chega, e tarfile levanta "empty file".
+          cat > /tmp/conferir_imagem.py <<'PY'
           import sys, tarfile
           SISTEMA = ("usr/", "lib/", "lib64/", "bin/", "sbin/", "etc/", "var/",
                      "opt/", "srv/", "root/", "home/", "tmp/", "proc/", "sys/",
@@ -137,6 +143,8 @@ jobs:
               sys.exit(1)
           print("ok: nenhum arquivo do repositorio dentro da imagem")
           PY
+
+          docker export "$cid" | python3 /tmp/conferir_imagem.py
 
       - name: Entrar no GHCR
         uses: docker/login-action@v3.3.0
