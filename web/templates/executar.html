@@ -60,14 +60,14 @@
     funil: [],
     haddock: [],
     md: [
-      { n: 'run',    r: 'Pose de origem (boltz_results_* ou .cif)', ph: 'E:\\...\\boltz_results_<par>' },
-      { n: 'md_dir', r: 'Pasta de saida da MD',                     ph: 'E:\\...\\md\\<par>' },
+      { n: 'run',    r: 'Pose de origem (boltz_results_* ou .cif)', ph: '<raiz-de-dados>/<campanha>/boltz_results_<par>' },
+      { n: 'md_dir', r: 'Pasta de saida da MD',                     ph: '<raiz-de-dados>/<campanha>/md/<par>' },
       { n: 'ns',     r: 'ns por replica (vazio = padrao do tier)',  ph: '10' },
       { n: 'replicas', r: 'Replicas',                               ph: '3' }
     ],
     energia: [
-      { n: 'alvo',  r: 'Pasta da MD (trajetoria) ou run/.cif (pose)', ph: 'E:\\...\\md\\<par>' },
-      { n: 'saida', r: 'Pasta de trabalho (so no modo pose)',         ph: 'E:\\...\\mmgbsa\\<par>' }
+      { n: 'alvo',  r: 'Pasta da MD (trajetoria) ou run/.cif (pose)', ph: '<raiz-de-dados>/<campanha>/md/<par>' },
+      { n: 'saida', r: 'Pasta de trabalho (so no modo pose)',         ph: '<raiz-de-dados>/<campanha>/mmgbsa/<par>' }
     ]
   };
 

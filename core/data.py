@@ -467,7 +467,8 @@ def load_subprojects(
         resultado[ident] = (
             _merge_local_into_curated(sub_json, local) if local is not None else sub_json
         )
-    # YAML local sem correspondente no JSON entra como esta (nada regride se E: sumir).
+    # YAML local sem correspondente no JSON entra como esta (nada regride se o
+    # indice curado desaparecer).
     for ident, local in por_id.items():
         resultado.setdefault(ident, local)
 

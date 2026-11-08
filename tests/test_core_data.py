@@ -434,7 +434,8 @@ def test_tabela_indices_ordena_e_tem_colunas(monkeypatch) -> None:
 
     `tabela_indices` monta um DataFrame, entao depende do extra [viz].
 
-    observe_pairs e monkeypatchado -> nao toca E: nem roda scoring_engine.score, so a
+    observe_pairs e monkeypatchado -> nao toca disco nem roda
+    scoring_engine.score, so a
     logica de projecao/ordenacao e exercitada.
     """
     pytest.importorskip("pandas", reason="extra [viz] nao instalado")

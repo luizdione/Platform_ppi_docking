@@ -42,7 +42,7 @@ def _capri_real() -> "Path | None":
 CAPRI_REAL = _capri_real()
 
 #: Cabecalho que o haddock3 escreve de verdade (13 linhas), reproduzido aqui
-#: para o teste sinteticoveja o mesmo formato sem depender do E:.
+#: para o teste sintetico ver o mesmo formato sem depender de dado em disco.
 _COMENTARIO = "\n".join(
     [
         "########################################",

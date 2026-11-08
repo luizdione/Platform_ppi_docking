@@ -22,7 +22,7 @@ def _sem_aquecer_o_painel():
     """Impede o painel de pontuar de verdade durante a suite.
 
     A app `web/` poe os subprojetos para pontuar em segundo plano quando sobe.
-    Num teste isso dispara SUBPROCESSOS sobre o dado real de E: (minutos de CPU)
+    Num teste isso dispara SUBPROCESSOS sobre o dado real em disco (minutos de CPU)
     -- e chegou a acontecer: um teste que trocava `PPI_DOCK_CACHE_DIR` por um
     diretorio temporario fez o aquecimento achar o cache vazio e repontuar os 4
     subprojetos, competindo com a propria suite. Aqui isso fica desligado para
