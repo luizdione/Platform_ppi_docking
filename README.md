@@ -381,6 +381,25 @@ cheap.
 
 ---
 
+## A note on language
+
+This is deliberate, not an oversight: **the public documentation is in English —
+this README, the `LICENSE` and `CITATION.cff` — while the panel's interface and
+the campaign configuration files are in Portuguese.**
+
+The split follows what each one is for. The README, the licence and the citation
+are how the project presents itself to anyone, so they are in English. The web
+panel and the `config/*.yaml` files (including the `texto:` fields that the
+panel's Help tab renders) are the author's working tools, read by the people who
+run the funnel, and they stay in the language those people use. Code comments
+and commit messages are in Portuguese for the same reason.
+
+The `LICENSE` is bilingual, with the Portuguese text prevailing: it is the
+version the Author adopted, and it is the one that invokes Brazilian law.
+
+Please don't "fix" this by translating one half — a half-translated interface is
+worse than either language.
+
 ## Third-party components
 
 `web/static/` carries 3Dmol.js and plotly.js, each under its own licence. They
