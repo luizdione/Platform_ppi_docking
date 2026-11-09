@@ -52,18 +52,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-      - name: Resolver a versao
+      # TAG DE VERSAO SO SAI DE REF IMUTAVEL. Por que: `workflow_dispatch` e
+      # `push` fazem checkout de um BRANCH, que se move. Marcar `:1.2.3` a partir
+      # de branch faz a tag de versao servir, amanha, conteudo diferente do que
+      # ela servia hoje -- divergindo do git, da release e de um eventual DOI.
+      # (Armadilha relatada pela sessao do CoIP-MS, que a viveu: disparou a mao
+      # para corrigir um rotulo e a tag de versao passou a servir conteudo mais
+      # novo que a release.)
+      #
+      # Regra: `github.ref_type == 'tag'` -> publica `:<versao>` e `:latest`.
+      #        branch -> publica `:latest` e `:sha-<curto>`, nunca a versao.
+      # `workflow_dispatch` aceita escolher uma TAG como ref: e assim que se
+      # republica uma versao de proposito.
+      - name: Resolver versao e tags
         id: ver
         shell: bash
         run: |
           set -euo pipefail
+          curto="${GITHUB_SHA:0:7}"
+          imutavel="false"
+          [ "${{ github.ref_type }}" = "tag" ] && imutavel="true"
+
           entrada="${{ inputs.versao }}"
           if [ -n "$entrada" ]; then
             versao="$entrada"
             origem="entrada do workflow_dispatch"
-          elif [ "${{ github.event_name }}" = "release" ]; then
+          elif [ "$imutavel" = "true" ]; then
             versao="${GITHUB_REF_NAME#v}"
-            origem="tag da release"
+            origem="tag git ${GITHUB_REF_NAME}"
           else
             # Fonte unica: o proprio LABEL do Dockerfile.
             versao="$(sed -n 's/.*org\.opencontainers\.image\.version="\([^"]*\)".*/\1/p' \
@@ -74,8 +90,36 @@ jobs:
             echo "::error::nao consegui resolver a versao da imagem"
             exit 1
           fi
-          echo "versao=$versao" >> "$GITHUB_OUTPUT"
+
+          if [ -n "$entrada" ] && [ "$imutavel" != "true" ]; then
+            echo "::error::versao '$entrada' pedida a partir de um branch \
+          (${GITHUB_REF_NAME}), que e ref MOVEL. Marcar uma tag de versao daqui \
+          faria ela servir conteudo diferente amanha. Dispare o workflow \
+          escolhendo a TAG da versao como ref, ou publique uma release."
+            exit 1
+          fi
+
+          if [ "$imutavel" = "true" ]; then
+            tags="${IMAGEM}:${versao}"$'\n'"${IMAGEM}:latest"
+            publica_versao="true"
+          else
+            tags="${IMAGEM}:latest"$'\n'"${IMAGEM}:sha-${curto}"
+            publica_versao="false"
+          fi
+
+          {
+            echo "versao=$versao"
+            echo "curto=$curto"
+            echo "publica_versao=$publica_versao"
+            echo "principal=$(echo "$tags" | head -1)"
+            echo "tags<<FIM"
+            echo "$tags"
+            echo "FIM"
+          } >> "$GITHUB_OUTPUT"
+
           echo "Versao: $versao (de: $origem)"
+          echo "Ref: ${GITHUB_REF_NAME} (${{ github.ref_type }}), imutavel=$imutavel"
+          echo "Tags a publicar:"; echo "$tags" | sed 's/^/  /'
 
       - name: Configurar Buildx
         uses: docker/setup-buildx-action@v3.7.1
@@ -91,7 +135,7 @@ jobs:
           platforms: linux/amd64
           push: false
           load: true
-          tags: ${{ env.IMAGEM }}:${{ steps.ver.outputs.versao }}
+          tags: ${{ steps.ver.outputs.tags }}
           # O SHA real do commit que gerou a imagem. Nao fica no Dockerfile
           # porque la ele envelheceria no commit seguinte.
           labels: |
@@ -107,7 +151,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          cid="$(docker create ${{ env.IMAGEM }}:${{ steps.ver.outputs.versao }})"
+          cid="$(docker create ${{ steps.ver.outputs.principal }})"
           trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
 
           # O script vai para um ARQUIVO, e so depois o tar e canalizado para ele.
@@ -157,17 +201,28 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          versao="${{ steps.ver.outputs.versao }}"
-          docker tag "${{ env.IMAGEM }}:$versao" "${{ env.IMAGEM }}:latest"
-          docker push "${{ env.IMAGEM }}:$versao"
-          docker push "${{ env.IMAGEM }}:latest"
+          tags="${{ steps.ver.outputs.tags }}"
+          while IFS= read -r t; do
+            [ -n "$t" ] || continue
+            docker push "$t"
+          done <<< "$tags"
+
           {
             echo "### Imagem publicada"
             echo
             echo '```'
-            echo "docker pull ${{ env.IMAGEM }}:$versao"
-            echo "docker pull ${{ env.IMAGEM }}:latest"
+            while IFS= read -r t; do
+              [ -n "$t" ] || continue
+              echo "docker pull $t"
+            done <<< "$tags"
             echo '```'
             echo
             echo "Commit: \`${{ github.sha }}\`"
+            if [ "${{ steps.ver.outputs.publica_versao }}" != "true" ]; then
+              echo
+              echo "> Build a partir de um branch, entao a tag de versao"
+              echo "> \`${{ steps.ver.outputs.versao }}\` **nao** foi publicada: ela so sai de"
+              echo "> uma tag git, para nunca servir conteudo diferente do que serviu"
+              echo "> quando a versao foi cortada."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
